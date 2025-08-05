@@ -126,7 +126,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzeqDwPApaWWCYhhtxE0uUICqYbL3cZBUVUPqNtqqKTAuBUlKzO4rIkI3azDo6cuBU8/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzcjowpZK5bRM2g5VQ77iG3KmYP6ff9u2eV8CJQOxwB3LuxeBOYHEXrcY738IQ3AVmC/exec';
 
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
@@ -146,7 +146,12 @@
             async function fetchData() {
                 showLoading();
                 try {
-                    const response = await fetch(`${WEB_APP_URL}?action=getSiswaData`);
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        redirect: 'follow',
+                        body: JSON.stringify({ action: 'getSiswaData' }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
                     const data = await response.json();
                     if (data.status === 'success') {
                         allSiswa = data.siswa;
