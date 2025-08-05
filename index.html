@@ -96,7 +96,7 @@
     <script src="main.js"></script>
     <script>
         // --- KONFIGURASI PENTING ---
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzeqDwPApaWWCYhhtxE0uUICqYbL3cZBUVUPqNtqqKTAuBUlKzO4rIkI3azDo6cuBU8/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzcjowpZK5bRM2g5VQ77iG3KmYP6ff9u2eV8CJQOxwB3LuxeBOYHEXrcY738IQ3AVmC/exec';
 
         // Cek apakah pengguna sudah login
         const userData = JSON.parse(localStorage.getItem('userData'));
@@ -110,14 +110,16 @@
             // --- FUNGSI UTAMA & PEMANGGILAN DATA ---
             async function fetchData() {
                 try {
-                    const response = await fetch(`${WEB_APP_URL}?action=getDashboardData`);
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        redirect: 'follow',
+                        body: JSON.stringify({ action: 'getDashboardData' }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     
                     const data = await response.json();
                     if (data.status !== 'success') throw new Error(data.message);
-
-                    fullData = data;
-                    updateUI(data);
 
                 } catch (error) {
                     console.error('Gagal mengambil data:', error);
