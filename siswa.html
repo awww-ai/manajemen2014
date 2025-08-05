@@ -222,15 +222,30 @@
                 });
             }
 
+            // --- PERUBAHAN DI SINI ---
             window.viewDetails = (siswaId) => {
                 const siswa = allSiswa.find(s => s.siswa_id === siswaId);
-                if (!siswa) return;
+                
+                // --- DEBUGGING ---
+                // Baris ini akan menampilkan semua data siswa yang diterima dari server di console browser (F12)
+                // Cek di sini apakah 'nama_orang_tua' dan 'url_foto' ada dan berisi nilai yang benar.
+                console.log("Data untuk siswa yang diklik:", siswa); 
+                
+                if (!siswa) {
+                    console.error("Siswa dengan ID " + siswaId + " tidak ditemukan di data.");
+                    return;
+                }
+
+                // Menggunakan variabel agar lebih mudah dibaca dan aman dari nilai null/undefined
+                const namaOrtu = siswa.nama_orang_tua || '-';
+                const fotoUrl = siswa.url_foto || 'https://placehold.co/150x150/e2e8f0/334155?text=No+Foto';
+                
                 detailContent.innerHTML = `
-                    <div class="flex justify-center"><img src="${siswa.url_foto || 'https://placehold.co/150x150?text=No+Foto'}" alt="Foto Siswa" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200"></div>
-                    <p><strong>Nama:</strong> ${siswa.nama_siswa}</p>
-                    <p><strong>Nama Ortu:</strong> ${siswa.nama_orang_tua || '-'}</p>
+                    <div class="flex justify-center"><img src="${fotoUrl}" alt="Foto Siswa" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200"></div>
+                    <p><strong>Nama:</strong> ${siswa.nama_siswa || '-'}</p>
+                    <p><strong>Nama Ortu:</strong> ${namaOrtu}</p>
                     <p><strong>No. HP:</strong> ${siswa.no_hp || '-'}</p>
-                    <p><strong>Status:</strong> ${siswa.status}</p>
+                    <p><strong>Status:</strong> ${siswa.status || '-'}</p>
                     ${siswa.url_berkas ? `<a href="${siswa.url_berkas}" target="_blank" class="block w-full text-center bg-green-500 text-white py-2 rounded-md hover:bg-green-600">Unduh Berkas</a>` : '<p>Berkas tidak tersedia.</p>'}
                 `;
                 detailModal.classList.remove('hidden');
