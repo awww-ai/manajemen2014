@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kesiswaan - Sistem Informasi SSJ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-md flex flex-col">
+            <div class="flex items-center justify-center h-20 border-b">
+                <img src="https://placehold.co/150x50/e2e8f0/334155?text=Logo+SSJ" alt="Logo SSJ" class="h-10">
+            </div>
+            <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+                <a href="index.html" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-md">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard
+                </a>
+                <a href="anggota.html" class="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-md">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.125-1.274-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.125-1.274.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Anggota
+                </a>
+                <a href="siswa.html" class="flex items-center px-4 py-2 text-gray-700 bg-gray-200 rounded-md font-semibold">
+                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z"></path><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222 4 2.222V20M12 14.5L6 11l6-3.5 6 3.5-6 3.5z"></path></svg>
+                    Kesiswaan
+                </a>
+            </nav>
+            <div class="mt-auto p-4 border-t border-gray-200">
+                <button id="logout-button" class="w-full flex items-center px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-md">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-6 sm:p-10 overflow-y-auto">
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Kesiswaan</h1>
+            </header>
+
+            <div class="flex justify-between items-center mb-6">
+                <input type="text" id="searchInput" class="block w-full max-w-xs pl-4 pr-3 py-2 border border-gray-300 rounded-md" placeholder="Cari siswa...">
+                <button id="add-siswa-btn" class="ml-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                    Tambah Siswa
+                </button>
+            </div>
+
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Siswa</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Ortu</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="siswa-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
+            <h3 id="modal-title" class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Tambah Siswa Baru</h3>
+            <form id="siswa-form">
+                <input type="hidden" id="siswa_id">
+                <div class="space-y-4">
+                    <div>
+                        <label for="nama_siswa" class="block text-sm font-medium text-gray-700">Nama Siswa</label>
+                        <input type="text" id="nama_siswa" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
+                    </div>
+                    <div>
+                        <label for="nama_orang_tua" class="block text-sm font-medium text-gray-700">Nama Orang Tua</label>
+                        <input type="text" id="nama_orang_tua" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="no_hp" class="block text-sm font-medium text-gray-700">No. HP</label>
+                        <input type="tel" id="no_hp" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                            <option value="Aktif">Aktif</option>
+                            <option value="Tidak Aktif">Tidak Aktif</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="foto" class="block text-sm font-medium text-gray-700">Foto Siswa (Gambar)</label>
+                        <input type="file" id="foto" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                    <div>
+                        <label for="berkas" class="block text-sm font-medium text-gray-700">Berkas (PDF)</label>
+                        <input type="file" id="berkas" accept=".pdf" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-form-btn" class="bg-white py-2 px-4 border border-gray-300 rounded-md">Batal</button>
+                    <button type="submit" id="save-form-btn" class="py-2 px-4 border border-transparent rounded-md text-white bg-blue-600">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detail -->
+    <div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+             <h3 class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Detail Siswa</h3>
+             <div id="detail-content" class="space-y-4"></div>
+             <div class="mt-6 flex justify-end">
+                <button id="close-detail-btn" class="bg-gray-200 py-2 px-4 border rounded-md">Tutup</button>
+             </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxI2WoCOqZNwtRpfYQcXIxEmx-ypy-kun1GqdCgj2nlN1OOhDPqYmi5v0RI8b2XBKw2/exec';
+
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            if (!userData) { window.location.href = 'login.html'; return; }
+
+            const tableBody = document.getElementById('siswa-table-body');
+            const addSiswaBtn = document.getElementById('add-siswa-btn');
+            const formModal = document.getElementById('form-modal');
+            const siswaForm = document.getElementById('siswa-form');
+            const cancelFormBtn = document.getElementById('cancel-form-btn');
+            const saveFormBtn = document.getElementById('save-form-btn');
+            const detailModal = document.getElementById('detail-modal');
+            const detailContent = document.getElementById('detail-content');
+            const closeDetailBtn = document.getElementById('close-detail-btn');
+
+            let allSiswa = [];
+
+            async function fetchData() {
+                showLoading();
+                try {
+                    const response = await fetch(`${WEB_APP_URL}?action=getSiswaData`);
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        allSiswa = data.siswa;
+                        renderTable(allSiswa);
+                    } else { showError(data.message); }
+                } catch (error) { showError(error.message); }
+            }
+
+            function renderTable(siswaList) {
+                tableBody.innerHTML = '';
+                if (!siswaList || siswaList.length === 0) { showEmpty(); return; }
+                siswaList.forEach(siswa => {
+                    const row = document.createElement('tr');
+                    row.className = 'cursor-pointer hover:bg-gray-50';
+                    row.onclick = () => viewDetails(siswa.siswa_id);
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${siswa.nama_siswa}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${siswa.nama_orang_tua || '-'}</td>
+                        <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${siswa.status === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${siswa.status}</span></td>
+                        <td class="px-6 py-4 text-right text-sm font-medium">
+                            <button class="text-indigo-600 hover:text-indigo-900" onclick="event.stopPropagation(); editSiswa('${siswa.siswa_id}')">Edit</button>
+                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="event.stopPropagation(); deleteSiswa('${siswa.siswa_id}')">Hapus</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            siswaForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                saveFormBtn.disabled = true;
+                saveFormBtn.textContent = 'Menyimpan...';
+
+                const formData = {
+                    action: 'addSiswa',
+                    nama_siswa: document.getElementById('nama_siswa').value,
+                    nama_orang_tua: document.getElementById('nama_orang_tua').value,
+                    no_hp: document.getElementById('no_hp').value,
+                    status: document.getElementById('status').value,
+                    foto: await readFileAsBase64(document.getElementById('foto').files[0]),
+                    berkas: await readFileAsBase64(document.getElementById('berkas').files[0])
+                };
+
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST', redirect: 'follow',
+                        body: JSON.stringify(formData),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const result = await response.json();
+                    alert(result.message);
+                    if (result.status === 'success') { closeFormModal(); fetchData(); }
+                } catch (error) {
+                    alert('Gagal menyimpan: ' + error.message);
+                } finally {
+                    saveFormBtn.disabled = false;
+                    saveFormBtn.textContent = 'Simpan';
+                }
+            });
+
+            function readFileAsBase64(file) {
+                if (!file) return Promise.resolve(null);
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve({ base64: reader.result.split(',')[1], type: file.type, name: file.name });
+                    reader.onerror = error => reject(error);
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            window.viewDetails = (siswaId) => {
+                const siswa = allSiswa.find(s => s.siswa_id === siswaId);
+                if (!siswa) return;
+                detailContent.innerHTML = `
+                    <div class="flex justify-center"><img src="${siswa.url_foto || 'https://placehold.co/150x150?text=No+Foto'}" alt="Foto Siswa" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200"></div>
+                    <p><strong>Nama:</strong> ${siswa.nama_siswa}</p>
+                    <p><strong>Nama Ortu:</strong> ${siswa.nama_orang_tua || '-'}</p>
+                    <p><strong>No. HP:</strong> ${siswa.no_hp || '-'}</p>
+                    <p><strong>Status:</strong> ${siswa.status}</p>
+                    ${siswa.url_berkas ? `<a href="${siswa.url_berkas}" target="_blank" class="block w-full text-center bg-green-500 text-white py-2 rounded-md hover:bg-green-600">Unduh Berkas</a>` : '<p>Berkas tidak tersedia.</p>'}
+                `;
+                detailModal.classList.remove('hidden');
+            };
+
+            window.editSiswa = (siswaId) => { alert('Fitur edit akan dibuat selanjutnya.'); };
+
+            window.deleteSiswa = async (siswaId) => {
+                if (confirm('Apakah Anda yakin ingin menghapus siswa ini?')) {
+                    try {
+                         const response = await fetch(WEB_APP_URL, {
+                            method: 'POST', redirect: 'follow',
+                            body: JSON.stringify({ action: 'deleteSiswa', siswa_id: siswaId }),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        });
+                        const result = await response.json();
+                        alert(result.message);
+                        if(result.status === 'success') fetchData();
+                    } catch(error) { alert('Gagal menghapus: ' + error.message); }
+                }
+            };
+
+            const openFormModal = () => formModal.classList.remove('hidden');
+            const closeFormModal = () => { formModal.classList.add('hidden'); siswaForm.reset(); };
+            
+            addSiswaBtn.addEventListener('click', openFormModal);
+            cancelFormBtn.addEventListener('click', closeFormModal);
+            closeDetailBtn.addEventListener('click', () => detailModal.classList.add('hidden'));
+            document.getElementById('logout-button').addEventListener('click', () => { localStorage.removeItem('userData'); window.location.href = 'login.html'; });
+            
+            const showLoading = () => tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
+            const showEmpty = () => tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Belum ada data siswa.</td></tr>`;
+            const showError = (message) => alert('Terjadi kesalahan: ' + message);
+
+            fetchData();
+        });
+    </script>
+</body>
+</html>
