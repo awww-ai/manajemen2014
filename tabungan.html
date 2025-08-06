@@ -43,19 +43,11 @@
             <!-- Controls and Data Display -->
             <div class="bg-white shadow-md rounded-lg p-6">
                 <!-- Filter Controls -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 pb-6 border-b">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 pb-6 border-b">
                     <div>
                         <label for="filter-siswa" class="text-sm font-medium text-gray-700">Siswa</label>
                         <select id="filter-siswa" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
                             <option value="semua">Semua Siswa</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="filter-jenis" class="text-sm font-medium text-gray-700">Jenis Transaksi</label>
-                        <select id="filter-jenis" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
-                            <option value="semua">Semua Jenis</option>
-                            <option value="Setoran">Setoran</option>
-                            <option value="Penarikan">Penarikan</option>
                         </select>
                     </div>
                     <div>
@@ -66,11 +58,12 @@
                         <label for="filter-ke-tanggal" class="text-sm font-medium text-gray-700">Ke Tanggal</label>
                         <input type="date" id="filter-ke-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
                     </div>
-                    <div class="flex items-end">
-                        <div class="flex space-x-2 w-full">
-                            <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="7">7H</button>
-                            <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="30">1B</button>
-                            <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="365">1T</button>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Preset Waktu</label>
+                        <div class="flex space-x-2 mt-1">
+                            <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="7">7H</button>
+                            <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="30">1B</button>
+                            <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="365">1T</button>
                         </div>
                     </div>
                 </div>
@@ -86,7 +79,9 @@
                     </div>
                 </div>
 
-                <div id="chart-container" class="h-96 w-full"> <canvas id="tabunganChart"></canvas> </div>
+                <div id="chart-container" class="h-96 w-full">
+                    <canvas id="tabunganChart"></canvas>
+                </div>
                 <div id="table-container" class="hidden overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
@@ -131,9 +126,6 @@
                             <option value="Penarikan">Penarikan</option>
                         </select>
                     </div>
-                    <div id="saldo-info-container" class="mt-2 text-sm text-gray-600 hidden">
-                        Saldo saat ini: <span id="saldo-display" class="font-bold">Memuat...</span>
-                    </div>
                     <div>
                         <label for="jumlah" class="block text-sm font-medium text-gray-700">Jumlah (Rp)</label>
                         <input type="number" id="jumlah" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
@@ -149,20 +141,18 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyJoxa88pRoMdFmHqn2daMXNNBtsPdpFvR3Y5k3K1e_wWS17yRI8ijlU5GvRJ3MSttU/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuqNMB1B4ZoVnP02RgnNrGPiOmIcUH_OG_uI1GWV5rFCaV7RLisiBs8wU087GCweHw/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
             let allTransactions = [];
             let allSiswa = [];
             let tabunganChartInstance;
-            let currentSiswaBalance = 0;
 
             // --- ELEMEN DOM ---
             const totalTersediaEl = document.getElementById('total-tersedia');
             const totalDitarikEl = document.getElementById('total-ditarik');
             const filterSiswaEl = document.getElementById('filter-siswa');
-            const filterJenisEl = document.getElementById('filter-jenis');
             const filterDariEl = document.getElementById('filter-dari-tanggal');
             const filterKeEl = document.getElementById('filter-ke-tanggal');
             const viewChartBtn = document.getElementById('view-chart-btn');
@@ -176,11 +166,9 @@
             const modalTitle = document.getElementById('modal-title');
             const addTransaksiBtn = document.getElementById('add-transaksi-btn');
             const cancelFormBtn = document.getElementById('cancel-form-btn');
-            const jenisTransaksiEl = document.getElementById('jenis_transaksi');
-            const namaSiswaInputEl = document.getElementById('nama_siswa_input');
-            const saldoInfoContainer = document.getElementById('saldo-info-container');
-            const saldoDisplay = document.getElementById('saldo-display');
 
+
+            // --- FUNGSI UTAMA ---
             async function fetchData() {
                 try {
                     const response = await fetch(WEB_APP_URL, {
@@ -208,12 +196,16 @@
                 updateSummary(filtered);
                 renderChart(filtered);
                 renderTable(filtered);
-                blankState.classList.toggle('hidden', filtered.length > 0);
+                
+                if (filtered.length === 0) {
+                    blankState.classList.remove('hidden');
+                } else {
+                    blankState.classList.add('hidden');
+                }
             }
 
             function getFilteredData() {
                 const selectedSiswa = filterSiswaEl.value;
-                const selectedJenis = filterJenisEl.value;
                 const fromDate = filterDariEl.value ? new Date(filterDariEl.value) : null;
                 const toDate = filterKeEl.value ? new Date(filterKeEl.value) : null;
                 if(fromDate) fromDate.setHours(0,0,0,0);
@@ -222,13 +214,13 @@
                 return allTransactions.filter(t => {
                     const tDate = new Date(t.tanggal);
                     const siswaMatch = selectedSiswa === 'semua' || t.siswa_id === selectedSiswa;
-                    const jenisMatch = selectedJenis === 'semua' || t.jenis_transaksi === selectedJenis;
                     const fromDateMatch = !fromDate || tDate >= fromDate;
                     const toDateMatch = !toDate || tDate <= toDate;
-                    return siswaMatch && jenisMatch && fromDateMatch && toDateMatch;
+                    return siswaMatch && fromDateMatch && toDateMatch;
                 });
             }
 
+            // --- FUNGSI TAMPILAN ---
             function updateSummary(data) {
                 const totalSetoran = data.filter(t => t.jenis_transaksi === 'Setoran').reduce((sum, t) => sum + Number(t.jumlah), 0);
                 const totalPenarikan = data.filter(t => t.jenis_transaksi === 'Penarikan').reduce((sum, t) => sum + Number(t.jumlah), 0);
@@ -239,6 +231,7 @@
 
             function populateSiswaFilters() {
                 const formSiswaList = document.getElementById('siswa-list-form');
+                // Kosongkan dulu untuk mencegah duplikasi saat refresh
                 filterSiswaEl.innerHTML = '<option value="semua">Semua Siswa</option>';
                 formSiswaList.innerHTML = '';
 
@@ -272,9 +265,7 @@
 
             function renderTable(data) {
                 tableBody.innerHTML = '';
-                const sortedData = data.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
-
-                sortedData.forEach(t => {
+                data.forEach(t => {
                     const siswa = allSiswa.find(s => s.siswa_id === t.siswa_id);
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -291,35 +282,42 @@
                 });
             }
 
-            async function checkAndDisplayBalance() {
-                const selectedSiswaName = namaSiswaInputEl.value;
-                const selectedOption = document.querySelector(`#siswa-list-form option[value='${selectedSiswaName}']`);
-                const isPenarikan = jenisTransaksiEl.value === 'Penarikan';
+            // --- EVENT LISTENERS & FORM HANDLING ---
+            document.querySelectorAll('#filter-siswa, #filter-dari-tanggal, #filter-ke-tanggal').forEach(el => el.addEventListener('change', updateView));
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const range = parseInt(this.dataset.range);
+                    const toDate = new Date();
+                    const fromDate = new Date();
+                    fromDate.setDate(toDate.getDate() - range);
+                    filterKeEl.valueAsDate = toDate;
+                    filterDariEl.valueAsDate = fromDate;
+                    updateView();
+                });
+            });
 
-                if (isPenarikan && selectedOption) {
-                    saldoInfoContainer.classList.remove('hidden');
-                    saldoDisplay.textContent = 'Memuat...';
-                    try {
-                        const response = await fetch(WEB_APP_URL, {
-                            method: 'POST', redirect: 'follow',
-                            body: JSON.stringify({ action: 'getSiswaBalance', siswa_id: selectedOption.dataset.id }),
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-                        });
-                        const result = await response.json();
-                        if (result.status === 'success') {
-                            currentSiswaBalance = result.balance;
-                            saldoDisplay.textContent = `Rp ${new Intl.NumberFormat('id-ID').format(result.balance)}`;
-                        } else {
-                            saldoDisplay.textContent = 'Gagal memuat';
-                        }
-                    } catch (error) {
-                        saldoDisplay.textContent = 'Error';
-                    }
-                } else {
-                    saldoInfoContainer.classList.add('hidden');
-                }
-            }
-            
+            viewChartBtn.addEventListener('click', () => {
+                chartContainer.classList.remove('hidden');
+                tableContainer.classList.add('hidden');
+                viewChartBtn.classList.add('bg-white', 'text-blue-600');
+                viewTableBtn.classList.remove('bg-white', 'text-blue-600');
+            });
+            viewTableBtn.addEventListener('click', () => {
+                chartContainer.classList.add('hidden');
+                tableContainer.classList.remove('hidden');
+                viewTableBtn.classList.add('bg-white', 'text-blue-600');
+                viewChartBtn.classList.remove('bg-white', 'text-blue-600');
+            });
+
+            addTransaksiBtn.addEventListener('click', () => {
+                transaksiForm.reset();
+                document.getElementById('transaksi_tabungan_id').value = '';
+                modalTitle.textContent = 'Tambah Transaksi';
+                document.getElementById('tanggal_transaksi').value = new Date().toISOString().split('T')[0];
+                formModal.classList.remove('hidden');
+            });
+            cancelFormBtn.addEventListener('click', () => formModal.classList.add('hidden'));
+
             transaksiForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const saveBtn = document.getElementById('save-form-btn');
@@ -335,35 +333,23 @@
                     return;
                 }
                 
-                const isPenarikan = jenisTransaksiEl.value === 'Penarikan';
-                const jumlahTransaksi = Number(document.getElementById('jumlah').value);
-
-                if (isPenarikan && jumlahTransaksi > currentSiswaBalance) {
-                    alert(`Penarikan gagal. Jumlah melebihi saldo yang tersedia (Rp ${new Intl.NumberFormat('id-ID').format(currentSiswaBalance)}).`);
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = 'Simpan';
-                    return;
-                }
-                
                 const id = document.getElementById('transaksi_tabungan_id').value;
                 const isUpdate = !!id;
 
                 const formData = {
                     action: isUpdate ? 'updateRow' : 'addTransaksi',
                     sheetName: 'Tabungan',
-                    id: id,
                     idColumnName: 'transaksi_tabungan_id',
+                    id: id,
                     data: {
                         tanggal: document.getElementById('tanggal_transaksi').value,
                         siswa_id: selectedOption.dataset.id,
                         jenis_transaksi: document.getElementById('jenis_transaksi').value,
-                        jumlah: jumlahTransaksi,
+                        jumlah: document.getElementById('jumlah').value,
                     }
                 };
                 if(isUpdate) {
                     formData.data.transaksi_tabungan_id = id;
-                } else {
-                    delete formData.data.transaksi_tabungan_id;
                 }
 
                 try {
@@ -398,7 +384,6 @@
                 document.getElementById('jenis_transaksi').value = t.jenis_transaksi;
                 document.getElementById('jumlah').value = t.jumlah;
                 formModal.classList.remove('hidden');
-                checkAndDisplayBalance();
             };
 
             window.deleteTransaksi = async (id) => {
@@ -416,51 +401,11 @@
                 }
             };
 
-            // --- EVENT LISTENERS ---
-            document.querySelectorAll('#filter-siswa, #filter-jenis, #filter-dari-tanggal, #filter-ke-tanggal').forEach(el => el.addEventListener('change', updateView));
-            document.querySelectorAll('.preset-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const range = parseInt(this.dataset.range);
-                    const toDate = new Date();
-                    const fromDate = new Date();
-                    fromDate.setDate(toDate.getDate() - range);
-                    filterKeEl.valueAsDate = toDate;
-                    filterDariEl.valueAsDate = fromDate;
-                    updateView();
-                });
-            });
-
-            viewChartBtn.addEventListener('click', () => {
-                chartContainer.classList.remove('hidden');
-                tableContainer.classList.add('hidden');
-                viewChartBtn.classList.add('bg-white', 'text-blue-600');
-                viewTableBtn.classList.remove('bg-white', 'text-blue-600');
-            });
-            viewTableBtn.addEventListener('click', () => {
-                chartContainer.classList.add('hidden');
-                tableContainer.classList.remove('hidden');
-                viewTableBtn.classList.add('bg-white', 'text-blue-600');
-                viewChartBtn.classList.remove('bg-white', 'text-blue-600');
-            });
-
-            addTransaksiBtn.addEventListener('click', () => {
-                transaksiForm.reset();
-                document.getElementById('transaksi_tabungan_id').value = '';
-                modalTitle.textContent = 'Tambah Transaksi';
-                document.getElementById('tanggal_transaksi').value = new Date().toISOString().split('T')[0];
-                formModal.classList.remove('hidden');
-                checkAndDisplayBalance();
-            });
-            cancelFormBtn.addEventListener('click', () => formModal.classList.add('hidden'));
-            
-            jenisTransaksiEl.addEventListener('change', checkAndDisplayBalance);
-            namaSiswaInputEl.addEventListener('input', checkAndDisplayBalance);
-
             // --- EXPORT LOGIC ---
             document.getElementById('export-pdf-btn').addEventListener('click', () => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                const data = getFilteredData().sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)).map(t => {
+                const data = getFilteredData().map(t => {
                     const siswa = allSiswa.find(s => s.siswa_id === t.siswa_id);
                     return [
                         new Date(t.tanggal).toLocaleDateString('id-ID'),
@@ -479,7 +424,7 @@
             });
             document.getElementById('export-excel-btn').addEventListener('click', () => {
                 let csvContent = "data:text/csv;charset=utf-8,Tanggal,Nama Siswa,Jenis,Jumlah\n";
-                getFilteredData().sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)).forEach(t => {
+                getFilteredData().forEach(t => {
                     const siswa = allSiswa.find(s => s.siswa_id === t.siswa_id);
                     csvContent += `${new Date(t.tanggal).toLocaleDateString('id-ID')},"${siswa ? siswa.nama_siswa : 'N/A'}",${t.jenis_transaksi},${t.jumlah}\n`;
                 });
