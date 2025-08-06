@@ -159,13 +159,14 @@
                     formHTML += `<p class="text-center text-gray-500">Tidak ada siswa yang perlu diabsen.</p>`;
                 } else {
                     sortedSiswa.forEach(siswa => {
+                        const absensiSiswa = currentAbsensi.find(a => a.siswa_id === siswa.siswa_id);
                         formHTML += `
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center border p-4 rounded-md">
                                 <div class="font-medium text-gray-800">${siswa.nama_siswa}</div>
                                 <div class="flex flex-wrap gap-x-4 gap-y-2 col-span-2">
                                     ${['Hadir', 'Sakit', 'Izin', 'Tanpa Keterangan'].map(status => `
                                         <div>
-                                            <input type="radio" id="${siswa.siswa_id}-${status}" name="status-${siswa.siswa_id}" value="${status}" class="mr-2" required>
+                                            <input type="radio" id="${siswa.siswa_id}-${status}" name="status-${siswa.siswa_id}" value="${status}" class="mr-2" required ${absensiSiswa && absensiSiswa.status_kehadiran === status ? 'checked' : ''}>
                                             <label for="${siswa.siswa_id}-${status}">${status}</label>
                                         </div>
                                     `).join('')}
@@ -231,13 +232,20 @@
                 saveBtn.textContent = 'Menyimpan...';
 
                 const statusKehadiranElement = document.querySelector('#edit-modal input[name="edit_status_kehadiran"]:checked');
+                const absensiId = document.getElementById('edit_absensi_id').value;
                 const formData = {
                     action: 'updateAbsensi',
-                    absensi_id: document.getElementById('edit_absensi_id').value,
+                    absensi_id: absensiId,
                     status_kehadiran: statusKehadiranElement.value,
                     keterangan: document.getElementById('edit_keterangan').value,
-                    tanggal: tanggalInput.value // Kirim tanggal untuk memastikan konsistensi
                 };
+
+                // Optimistic UI Update
+                const originalRecord = currentAbsensi.find(a => a.absensi_id === absensiId);
+                const updatedRecord = { ...originalRecord, ...formData };
+                const updatedAbsensiList = currentAbsensi.map(a => a.absensi_id === absensiId ? updatedRecord : a);
+                renderTable(updatedAbsensiList); // Update tabel langsung
+                closeEditModal();
 
                 try {
                     const response = await fetch(WEB_APP_URL, {
@@ -246,12 +254,16 @@
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                     });
                     const result = await response.json();
-                    alert(result.message);
-                    if (result.status === 'success') {
-                        closeEditModal();
+                    if (result.status !== 'success') {
+                        // Jika gagal, kembalikan ke state semula dan tampilkan error
+                        renderTable(currentAbsensi); 
+                        alert(result.message);
+                    } else {
+                        // Jika berhasil, konfirmasi dengan data baru dari server
                         fetchData(tanggalInput.value);
                     }
                 } catch (error) {
+                    renderTable(currentAbsensi);
                     alert('Gagal menyimpan: ' + error.message);
                 } finally {
                     saveBtn.disabled = false;
@@ -295,13 +307,14 @@
             };
             
             addAbsensiBtn.addEventListener('click', () => {
-                const siswaSudahAbsenIds = currentAbsensi.map(a => a.siswa_id);
-                const siswaBelumAbsen = allSiswa.filter(s => !siswaSudahAbsenIds.includes(s.siswa_id));
-                if(siswaBelumAbsen.length === 0) {
-                    alert('Semua siswa aktif sudah diabsen untuk tanggal ini.');
+                const siswaHadirIds = currentAbsensi.filter(a => a.status_kehadiran === 'Hadir').map(a => a.siswa_id);
+                const siswaBisaDiubah = allSiswa.filter(s => !siswaHadirIds.includes(s.siswa_id));
+                
+                if(siswaBisaDiubah.length === 0) {
+                    alert('Semua siswa aktif sudah hadir. Gunakan tombol Edit untuk mengubah status individu.');
                     return;
                 }
-                renderMassInputForm(siswaBelumAbsen);
+                renderMassInputForm(siswaBisaDiubah);
             });
 
             cancelEditBtn.addEventListener('click', closeEditModal);
