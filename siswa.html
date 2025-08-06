@@ -104,7 +104,7 @@
     <!-- 2. Skrip khusus untuk halaman siswa -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywZvxjwx6ua_-GOsnAnwqwoRVAsQnvXOmWQrVlxl08J4tOlfuq04rDGbqIrwNIb0zB/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuqNMB1B4ZoVnP02RgnNrGPiOmIcUH_OG_uI1GWV5rFCaV7RLisiBs8wU087GCweHw/exec';
 
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
@@ -221,8 +221,35 @@
                 detailModal.classList.remove('hidden');
             };
 
-            window.editSiswa = (siswaId) => { alert('Fitur edit akan dibuat selanjutnya.'); };
+            window.editSiswa = (siswaId) => {
+        const siswa = allSiswa.find(s => s.siswa_id === siswaId);
+        if (!siswa) return;
 
+        modalTitle.textContent = 'Edit Data Siswa';
+        document.getElementById('siswa_id').value = siswa.siswa_id;
+        document.getElementById('nama_siswa').value = siswa.nama_siswa;
+        document.getElementById('nama_orang_tua').value = siswa.nama_orang_tua;
+        document.getElementById('no_hp').value = siswa.no_hp;
+        document.getElementById('status').value = siswa.status;
+        
+        // Kosongkan input file karena kita tidak bisa mengisi ulang
+        document.getElementById('foto').value = '';
+        document.getElementById('berkas').value = '';
+
+        openFormModal();
+    };
+
+    // Ubah logika form submit untuk menangani update
+    siswaForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        // ... (logika loading)
+
+        const isUpdate = document.getElementById('siswa_id').value;
+        const formData = {
+            action: isUpdate ? 'updateSiswa' : 'addSiswa',
+            siswa_id: document.getElementById('siswa_id').value,
+            // ... (sisa field form)
+        };
             window.deleteSiswa = async (siswaId) => {
                 if (confirm('Apakah Anda yakin ingin menghapus siswa ini?')) {
                     try {
