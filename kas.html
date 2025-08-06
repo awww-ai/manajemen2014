@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arus Kas - Sistem Informasi SSJ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen">
+        <!-- Sidebar Placeholder -->
+        <aside id="sidebar-placeholder" class="w-64 bg-white shadow-md flex flex-col"></aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 sm:p-10 overflow-y-auto">
+            <header class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Arus Kas</h1>
+                <button id="add-transaksi-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                    Tambah Transaksi
+                </button>
+            </header>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <p class="text-sm font-medium text-gray-500">Total Uang Kas Tersedia</p>
+                    <p id="total-tersedia" class="text-3xl font-bold text-blue-600 mt-1">Memuat...</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <p class="text-sm font-medium text-gray-500">Total Pemasukan</p>
+                    <p id="total-pemasukan" class="text-3xl font-bold text-green-600 mt-1">Memuat...</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <p class="text-sm font-medium text-gray-500">Total Pengeluaran</p>
+                    <p id="total-pengeluaran" class="text-3xl font-bold text-red-600 mt-1">Memuat...</p>
+                </div>
+            </div>
+
+            <!-- Data Section -->
+            <div class="bg-white shadow-md rounded-lg p-6">
+                <!-- Filter Controls -->
+                <div class="mb-6 pb-6 border-b">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label for="filter-sumber" class="text-sm font-medium text-gray-700">Sumber Pemasukan</label>
+                            <select id="filter-sumber" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                                <option value="semua">Semua Sumber</option>
+                                <option value="Iuran Siswa">Iuran Siswa</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div id="filter-siswa-container" class="hidden">
+                            <label for="filter-siswa" class="text-sm font-medium text-gray-700">Nama Siswa</label>
+                            <input type="text" id="filter-siswa" list="siswa-list-filter" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                            <datalist id="siswa-list-filter"></datalist>
+                        </div>
+                        <div>
+                            <label for="filter-jenis" class="text-sm font-medium text-gray-700">Jenis Transaksi</label>
+                            <select id="filter-jenis" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                                <option value="semua">Semua Jenis</option>
+                                <option value="Pemasukan">Pemasukan</option>
+                                <option value="Pengeluaran">Pengeluaran</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="filter-dari-tanggal" class="text-sm font-medium text-gray-700">Dari Tanggal</label>
+                            <input type="date" id="filter-dari-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                        </div>
+                        <div>
+                            <label for="filter-ke-tanggal" class="text-sm font-medium text-gray-700">Ke Tanggal</label>
+                            <input type="date" id="filter-ke-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                        </div>
+                    </div>
+                     <div class="flex items-center space-x-2 mt-4">
+                        <label class="text-sm font-medium text-gray-700">Preset:</label>
+                        <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="7">7H</button>
+                        <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="30">1B</button>
+                        <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="365">1T</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 mb-4">
+                    <button id="export-pdf-btn" class="text-sm py-2 px-3 rounded bg-red-500 text-white hover:bg-red-600">Export PDF</button>
+                    <button id="export-excel-btn" class="text-sm py-2 px-3 rounded bg-green-500 text-white hover:bg-green-600">Export Excel</button>
+                </div>
+
+                <!-- Two Column Layout for Data -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left Column: Table -->
+                    <div class="lg:col-span-2">
+                        <div id="table-container" class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Keterangan</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jenis</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kas-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Right Column: Chart -->
+                    <div class="lg:col-span-1">
+                        <div id="chart-container" class="h-96 w-full">
+                            <canvas id="kasChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div id="blank-state" class="text-center py-10 text-gray-500 hidden">
+                    Tidak ada data transaksi kas pada rentang yang dipilih.
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
+            <h3 id="modal-title" class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Tambah Transaksi Kas</h3>
+            <form id="transaksi-form">
+                <input type="hidden" id="transaksi_kas_id">
+                <div class="space-y-4">
+                    <div>
+                        <label for="tanggal_transaksi" class="block text-sm font-medium text-gray-700">Tanggal</label>
+                        <input type="date" id="tanggal_transaksi" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
+                    </div>
+                    <div>
+                        <label for="keterangan" class="block text-sm font-medium text-gray-700">Keterangan</label>
+                        <input type="text" id="keterangan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
+                    </div>
+                    <div>
+                        <label for="jenis_transaksi" class="block text-sm font-medium text-gray-700">Jenis Transaksi</label>
+                        <select id="jenis_transaksi" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                            <option value="Pemasukan">Pemasukan</option>
+                            <option value="Pengeluaran">Pengeluaran</option>
+                        </select>
+                    </div>
+                    <div id="sumber-pemasukan-container">
+                        <label for="sumber_pemasukan" class="block text-sm font-medium text-gray-700">Sumber Pemasukan</label>
+                        <select id="sumber_pemasukan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                            <option value="Lainnya">Lainnya</option>
+                            <option value="Iuran Siswa">Iuran Siswa</option>
+                        </select>
+                    </div>
+                    <div id="form-siswa-container" class="hidden">
+                        <label for="nama_siswa_input" class="block text-sm font-medium text-gray-700">Nama Siswa</label>
+                        <input type="text" id="nama_siswa_input" list="siswa-list-form" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                        <datalist id="siswa-list-form"></datalist>
+                    </div>
+                    <div>
+                        <label for="jumlah" class="block text-sm font-medium text-gray-700">Jumlah (Rp)</label>
+                        <input type="number" id="jumlah" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-form-btn" class="bg-white py-2 px-4 border border-gray-300 rounded-md">Batal</button>
+                    <button type="submit" id="save-form-btn" class="py-2 px-4 border border-transparent rounded-md text-white bg-blue-600">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxQ9gdoAG5OPrl3My7QXEu6FNDqLQOClKzzcDYXnGOBaXnDkd8n1wNlv31_PievnT-6/exec';
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            if (!userData) { window.location.href = 'login.html'; return; }
+
+            // --- Logika Halaman Kas ---
+            
+            // Placeholder untuk data
+            let allTransactions = [];
+            let allSiswa = [];
+            let kasChartInstance;
+
+            async function fetchData() {
+                console.log("Fetching data for Kas page...");
+                // Nanti akan memanggil:
+                // const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getKasPageData' }) });
+                // const data = await response.json();
+                // allTransactions = data.transactions;
+                // allSiswa = data.siswa;
+                
+                // Data contoh untuk pengembangan
+                allSiswa = [
+                    { siswa_id: 'siswa-001', nama_siswa: 'Budi Santoso' },
+                    { siswa_id: 'siswa-002', nama_siswa: 'Citra Lestari' }
+                ];
+                allTransactions = [
+                    { transaksi_kas_id: 'k-001', tanggal: '2025-08-01', keterangan: 'Iuran Kas Budi', jenis_transaksi: 'Pemasukan', sumber_pemasukan: 'Iuran Siswa', siswa_id: 'siswa-001', jumlah: 25000 },
+                    { transaksi_kas_id: 'k-002', tanggal: '2025-08-02', keterangan: 'Beli Air Minum', jenis_transaksi: 'Pengeluaran', sumber_pemasukan: '', siswa_id: '', jumlah: 15000 },
+                    { transaksi_kas_id: 'k-003', tanggal: '2025-08-03', keterangan: 'Iuran Kas Citra', jenis_transaksi: 'Pemasukan', sumber_pemasukan: 'Iuran Siswa', siswa_id: 'siswa-002', jumlah: 25000 },
+                    { transaksi_kas_id: 'k-004', tanggal: '2025-08-04', keterangan: 'Donasi Alumni', jenis_transaksi: 'Pemasukan', sumber_pemasukan: 'Lainnya', siswa_id: '', jumlah: 100000 },
+                ];
+
+                updateDashboard();
+                populateSiswaFilters();
+            }
+
+            function updateDashboard() {
+                console.log("Updating dashboard...");
+                const totalPemasukan = allTransactions.filter(t => t.jenis_transaksi === 'Pemasukan').reduce((sum, t) => sum + t.jumlah, 0);
+                const totalPengeluaran = allTransactions.filter(t => t.jenis_transaksi === 'Pengeluaran').reduce((sum, t) => sum + t.jumlah, 0);
+                
+                document.getElementById('total-tersedia').textContent = `Rp ${new Intl.NumberFormat('id-ID').format(totalPemasukan - totalPengeluaran)}`;
+                document.getElementById('total-pemasukan').textContent = `Rp ${new Intl.NumberFormat('id-ID').format(totalPemasukan)}`;
+                document.getElementById('total-pengeluaran').textContent = `Rp ${new Intl.NumberFormat('id-ID').format(totalPengeluaran)}`;
+                
+                // Panggil render chart dan table
+                renderChart(allTransactions);
+                renderTable(allTransactions);
+            }
+            
+            function populateSiswaFilters() {
+                const filterSiswaList = document.getElementById('siswa-list-filter');
+                const formSiswaList = document.getElementById('siswa-list-form');
+                
+                allSiswa.forEach(siswa => {
+                    const dataListOption = document.createElement('option');
+                    dataListOption.value = siswa.nama_siswa;
+                    dataListOption.dataset.id = siswa.siswa_id;
+                    
+                    filterSiswaList.appendChild(dataListOption.cloneNode(true));
+                    formSiswaList.appendChild(dataListOption.cloneNode(true));
+                });
+            }
+
+            function renderChart(data) { /* ... logika chart ... */ }
+            function renderTable(data) { /* ... logika tabel ... */ }
+            
+            // --- Event Listeners ---
+            document.getElementById('add-transaksi-btn').addEventListener('click', () => {
+                document.getElementById('form-modal').classList.remove('hidden');
+            });
+            document.getElementById('cancel-form-btn').addEventListener('click', () => {
+                document.getElementById('form-modal').classList.add('hidden');
+            });
+            
+            // Tampilkan/sembunyikan input siswa di form
+            document.getElementById('sumber_pemasukan').addEventListener('change', function() {
+                const siswaContainer = document.getElementById('form-siswa-container');
+                if (this.value === 'Iuran Siswa') {
+                    siswaContainer.classList.remove('hidden');
+                } else {
+                    siswaContainer.classList.add('hidden');
+                }
+            });
+            
+            // Tampilkan/sembunyikan filter siswa
+            document.getElementById('filter-sumber').addEventListener('change', function() {
+                 const siswaFilterContainer = document.getElementById('filter-siswa-container');
+                 if (this.value === 'Iuran Siswa') {
+                    siswaFilterContainer.classList.remove('hidden');
+                 } else {
+                    siswaFilterContainer.classList.add('hidden');
+                 }
+            });
+
+            // Panggil fungsi awal
+            fetchData();
+        });
+    </script>
+    
+    <script src="main.js"></script>
+</body>
+</html>
