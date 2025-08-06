@@ -23,14 +23,9 @@
             </header>
 
             <div class="bg-white shadow-md rounded-lg p-6">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
-                    <div class="flex items-center">
-                        <label for="tanggal-absensi" class="text-lg font-medium text-gray-700 mr-4">Tanggal:</label>
-                        <input type="date" id="tanggal-absensi" class="border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
-                    <button id="add-absensi-btn" class="w-full md:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                        Tambah / Ubah Absen
-                    </button>
+                <div class="flex items-center mb-6 border-b pb-4">
+                    <label for="tanggal-absensi" class="text-lg font-medium text-gray-700 mr-4">Tanggal:</label>
+                    <input type="date" id="tanggal-absensi" class="border-gray-300 rounded-md shadow-sm p-2">
                 </div>
                 
                 <div id="content-container">
@@ -73,7 +68,6 @@
 
             const tanggalInput = document.getElementById('tanggal-absensi');
             const contentContainer = document.getElementById('content-container');
-            const addAbsensiBtn = document.getElementById('add-absensi-btn');
             const editModal = document.getElementById('edit-modal');
             const absensiFormEdit = document.getElementById('absensi-form-edit');
             const cancelEditBtn = document.getElementById('cancel-edit-btn');
@@ -240,11 +234,10 @@
                     keterangan: document.getElementById('edit_keterangan').value,
                 };
 
-                // Optimistic UI Update
                 const originalRecord = currentAbsensi.find(a => a.absensi_id === absensiId);
                 const updatedRecord = { ...originalRecord, ...formData };
                 const updatedAbsensiList = currentAbsensi.map(a => a.absensi_id === absensiId ? updatedRecord : a);
-                renderTable(updatedAbsensiList); // Update tabel langsung
+                renderTable(updatedAbsensiList);
                 closeEditModal();
 
                 try {
@@ -255,11 +248,9 @@
                     });
                     const result = await response.json();
                     if (result.status !== 'success') {
-                        // Jika gagal, kembalikan ke state semula dan tampilkan error
                         renderTable(currentAbsensi); 
                         alert(result.message);
                     } else {
-                        // Jika berhasil, konfirmasi dengan data baru dari server
                         fetchData(tanggalInput.value);
                     }
                 } catch (error) {
@@ -306,17 +297,6 @@
                 absensiFormEdit.reset();
             };
             
-            addAbsensiBtn.addEventListener('click', () => {
-                const siswaHadirIds = currentAbsensi.filter(a => a.status_kehadiran === 'Hadir').map(a => a.siswa_id);
-                const siswaBisaDiubah = allSiswa.filter(s => !siswaHadirIds.includes(s.siswa_id));
-                
-                if(siswaBisaDiubah.length === 0) {
-                    alert('Semua siswa aktif sudah hadir. Gunakan tombol Edit untuk mengubah status individu.');
-                    return;
-                }
-                renderMassInputForm(siswaBisaDiubah);
-            });
-
             cancelEditBtn.addEventListener('click', closeEditModal);
             tanggalInput.addEventListener('change', () => fetchData(tanggalInput.value));
             
