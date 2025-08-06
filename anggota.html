@@ -31,7 +31,7 @@
 
             <div class="bg-white shadow-md rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
+                    <table id="anggota-table" class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Lengkap</th>
@@ -42,6 +42,9 @@
                         </thead>
                         <tbody id="anggota-table-body" class="bg-white divide-y divide-gray-200"></tbody>
                     </table>
+                </div>
+                <div id="blank-state" class="text-center py-10 text-gray-500 hidden">
+                    Belum ada data anggota.
                 </div>
             </div>
         </main>
@@ -87,17 +90,19 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuqNMB1B4ZoVnP02RgnNrGPiOmIcUH_OG_uI1GWV5rFCaV7RLisiBs8wU087GCweHw/exec';
-
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
+            const table = document.getElementById('anggota-table');
             const tableBody = document.getElementById('anggota-table-body');
+            const blankState = document.getElementById('blank-state');
             const addAnggotaBtn = document.getElementById('add-anggota-btn');
             const formModal = document.getElementById('form-modal');
             const anggotaForm = document.getElementById('anggota-form');
             const cancelFormBtn = document.getElementById('cancel-form-btn');
             const saveFormBtn = document.getElementById('save-form-btn');
             const modalTitle = document.getElementById('modal-title');
+            const searchInput = document.getElementById('searchInput');
 
             let allAnggota = [];
 
@@ -120,7 +125,14 @@
 
             function renderTable(anggotaList) {
                 tableBody.innerHTML = '';
-                if (!anggotaList || anggotaList.length === 0) { showEmpty(); return; }
+                if (!anggotaList || anggotaList.length === 0) {
+                    showEmpty();
+                    return;
+                }
+                
+                table.classList.remove('hidden');
+                blankState.classList.add('hidden');
+
                 anggotaList.forEach(anggota => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -141,10 +153,12 @@
                 saveFormBtn.disabled = true;
                 saveFormBtn.textContent = 'Menyimpan...';
 
-                const isUpdate = document.getElementById('user_id').value;
+                const userId = document.getElementById('user_id').value;
+                const isUpdate = !!userId; // Cek apakah user_id ada isinya
+
                 const formData = {
                     action: isUpdate ? 'updateUser' : 'addUser',
-                    user_id: document.getElementById('user_id').value,
+                    user_id: userId,
                     nama_lengkap: document.getElementById('nama_lengkap').value,
                     username: document.getElementById('username').value,
                     password: document.getElementById('password').value,
@@ -159,7 +173,10 @@
                     });
                     const result = await response.json();
                     alert(result.message);
-                    if (result.status === 'success') { closeFormModal(); fetchData(); }
+                    if (result.status === 'success') {
+                        closeFormModal();
+                        fetchData();
+                    }
                 } catch (error) {
                     alert('Gagal menyimpan: ' + error.message);
                 } finally {
@@ -177,7 +194,7 @@
                 document.getElementById('nama_lengkap').value = anggota.nama_lengkap;
                 document.getElementById('username').value = anggota.username;
                 document.getElementById('role').value = anggota.role;
-                document.getElementById('password').value = ''; // Kosongkan password
+                document.getElementById('password').value = '';
                 document.getElementById('password').placeholder = 'Kosongkan jika tidak ingin mengubah';
                 
                 openFormModal();
@@ -198,6 +215,15 @@
                 }
             };
 
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredAnggota = allAnggota.filter(anggota => 
+                    anggota.nama_lengkap.toLowerCase().includes(searchTerm) ||
+                    anggota.username.toLowerCase().includes(searchTerm)
+                );
+                renderTable(filteredAnggota);
+            });
+
             const openFormModal = () => formModal.classList.remove('hidden');
             const closeFormModal = () => {
                 formModal.classList.add('hidden');
@@ -211,7 +237,10 @@
             cancelFormBtn.addEventListener('click', closeFormModal);
             
             const showLoading = () => tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
-            const showEmpty = () => tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Belum ada data anggota.</td></tr>`;
+            const showEmpty = () => {
+                table.classList.add('hidden');
+                blankState.classList.remove('hidden');
+            };
             const showError = (message) => alert('Terjadi kesalahan: ' + message);
 
             fetchData();
