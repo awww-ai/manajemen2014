@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saran & Kritik - Sistem Informasi SSJ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PERUBAHAN: Menambahkan library jsPDF dan jsPDF-AutoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen">
+        <!-- Sidebar Placeholder -->
+        <aside id="sidebar-placeholder" class="w-64 bg-white shadow-md flex flex-col"></aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 sm:p-10 overflow-y-auto">
+            <header class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Saran & Kritik</h1>
+                <!-- PERUBAHAN: Menambahkan div untuk mengelompokkan tombol -->
+                <div class="flex space-x-2">
+                    <button id="export-pdf-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">
+                        Export PDF
+                    </button>
+                    <button id="add-saran-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                        Tambah Saran
+                    </button>
+                </div>
+            </header>
+
+            <!-- Data Table -->
+            <div class="bg-white shadow-md rounded-lg p-6">
+                <!-- Filter Controls -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 pb-6 border-b">
+                    <div>
+                        <label for="filter-dari-tanggal" class="text-sm font-medium text-gray-700">Dari Tanggal</label>
+                        <input type="date" id="filter-dari-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="filter-ke-tanggal" class="text-sm font-medium text-gray-700">Ke Tanggal</label>
+                        <input type="date" id="filter-ke-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Preset Waktu</label>
+                        <div class="flex space-x-2 mt-1">
+                            <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="7">7H</button>
+                            <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="30">1B</button>
+                            <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="365">1T</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="filter-status" class="text-sm font-medium text-gray-700">Tampilkan</label>
+                         <select id="filter-status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                            <option value="Aktif">Hanya Aktif</option>
+                            <option value="Diarsipkan">Hanya Diarsipkan</option>
+                            <option value="Semua">Tampilkan Semua</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table id="saran-table" class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pengirim</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Isi Saran</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="saran-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+                 <div id="blank-state" class="text-center py-10 text-gray-500 hidden">
+                    Belum ada data saran & kritik.
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
+            <h3 id="modal-title" class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Tambah Saran & Kritik</h3>
+            <form id="saran-form">
+                <input type="hidden" id="saran_id">
+                <div class="space-y-4">
+                    <div>
+                        <label for="pengirim" class="block text-sm font-medium text-gray-700">Nama Pengirim (Opsional)</label>
+                        <input type="text" id="pengirim" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" placeholder="Kosongkan untuk menjadi anonim">
+                    </div>
+                    <div>
+                        <label for="isi_saran" class="block text-sm font-medium text-gray-700">Isi Saran / Kritik</label>
+                        <textarea id="isi_saran" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required></textarea>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-form-btn" class="bg-white py-2 px-4 border border-gray-300 rounded-md">Batal</button>
+                    <button type="submit" id="save-form-btn" class="py-2 px-4 border border-transparent rounded-md text-white bg-blue-600">Kirim</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxQ9gdoAG5OPrl3My7QXEu6FNDqLQOClKzzcDYXnGOBaXnDkd8n1wNlv31_PievnT-6/exec';
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            if (!userData) { window.location.href = 'login.html'; return; }
+
+            let allSaran = [];
+
+            async function fetchData() {
+                // Data contoh untuk pengembangan
+                const today = new Date();
+                const yesterday = new Date(new Date().setDate(today.getDate() - 1));
+                const lastWeek = new Date(new Date().setDate(today.getDate() - 7));
+
+                allSaran = [
+                    { saran_id: 's-001', tanggal_kirim: today.toISOString(), pengirim: 'Budi Santoso', isi_saran: 'Jadwal latihan sebaiknya ditambah di hari Sabtu.', status: 'Aktif' },
+                    { saran_id: 's-002', tanggal_kirim: yesterday.toISOString(), pengirim: 'Anonymous', isi_saran: 'Perlu ada perbaikan pada fasilitas toilet.', status: 'Aktif' },
+                    { saran_id: 's-003', tanggal_kirim: lastWeek.toISOString(), pengirim: 'Orang Tua Siswa', isi_saran: 'Terima kasih atas bimbingan pelatih.', status: 'Diarsipkan' },
+                ];
+
+                updateView();
+            }
+
+            function updateView() {
+                const statusFilter = document.getElementById('filter-status').value;
+                const fromDate = document.getElementById('filter-dari-tanggal').value;
+                const toDate = document.getElementById('filter-ke-tanggal').value;
+
+                let filteredData = allSaran.filter(item => {
+                    if (statusFilter !== 'Semua' && item.status !== statusFilter) {
+                        return false;
+                    }
+                    if (fromDate) {
+                        if (new Date(item.tanggal_kirim).setHours(0,0,0,0) < new Date(fromDate).getTime()) return false;
+                    }
+                    if (toDate) {
+                        if (new Date(item.tanggal_kirim).setHours(0,0,0,0) > new Date(toDate).getTime()) return false;
+                    }
+                    return true;
+                });
+
+                renderTable(filteredData);
+            }
+
+            function renderTable(saranList) {
+                const table = document.getElementById('saran-table');
+                const tableBody = document.getElementById('saran-table-body');
+                const blankState = document.getElementById('blank-state');
+                tableBody.innerHTML = '';
+
+                if (!saranList || saranList.length === 0) {
+                    blankState.classList.remove('hidden');
+                    table.classList.add('hidden');
+                    return;
+                }
+                blankState.classList.add('hidden');
+                table.classList.remove('hidden');
+
+                saranList.forEach(saran => {
+                    const row = document.createElement('tr');
+                    const isArchived = saran.status === 'Diarsipkan';
+                    row.className = isArchived ? 'bg-gray-50' : '';
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(saran.tanggal_kirim).toLocaleString('id-ID')}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${saran.pengirim}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${saran.isi_saran}</td>
+                        <td class="px-6 py-4 text-right text-sm font-medium">
+                            <button class="text-gray-500 hover:text-gray-800" onclick="archiveSaran('${saran.saran_id}', ${!isArchived})">${isArchived ? 'Batal Arsip' : 'Arsipkan'}</button>
+                            <button class="text-indigo-600 hover:text-indigo-900 ml-4" onclick="editSaran('${saran.saran_id}')">Edit</button>
+                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="deleteSaran('${saran.saran_id}')">Hapus</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+            
+            // --- Event Listeners & Form Handling ---
+            const formModal = document.getElementById('form-modal');
+            const saranForm = document.getElementById('saran-form');
+            const modalTitle = document.getElementById('modal-title');
+
+            document.getElementById('add-saran-btn').addEventListener('click', () => {
+                saranForm.reset();
+                document.getElementById('saran_id').value = '';
+                modalTitle.textContent = 'Tambah Saran & Kritik';
+                formModal.classList.remove('hidden');
+            });
+
+            document.getElementById('cancel-form-btn').addEventListener('click', () => {
+                formModal.classList.add('hidden');
+            });
+
+            saranForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                let pengirim = document.getElementById('pengirim').value.trim();
+                if (pengirim === '') {
+                    pengirim = 'Anonymous';
+                }
+                alert(`Pengirim: ${pengirim}\nFungsi simpan belum terhubung ke backend.`);
+            });
+
+            // PERUBAHAN: Menambahkan fungsi export PDF
+            document.getElementById('export-pdf-btn').addEventListener('click', () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                doc.text("Laporan Saran & Kritik", 14, 16);
+                doc.autoTable({
+                    html: '#saran-table',
+                    startY: 20,
+                    // Hapus kolom aksi dari PDF
+                    columns: [
+                        { header: 'Tanggal', dataKey: 0 },
+                        { header: 'Pengirim', dataKey: 1 },
+                        { header: 'Isi Saran', dataKey: 2 },
+                    ]
+                });
+
+                doc.save('laporan-saran-kritik.pdf');
+            });
+
+            window.editSaran = (id) => alert(`Fungsi edit untuk ID: ${id} belum dibuat.`);
+            window.deleteSaran = (id) => {
+                if(confirm('Yakin ingin menghapus?')) alert(`Fungsi hapus untuk ID: ${id} belum terhubung.`);
+            }
+            window.archiveSaran = (id, shouldArchive) => {
+                const action = shouldArchive ? 'mengarsipkan' : 'membatalkan arsip';
+                if(confirm(`Yakin ingin ${action} saran ini?`)) alert(`Fungsi arsip untuk ID: ${id} belum terhubung.`);
+            }
+
+            // Filters
+            document.getElementById('filter-status').addEventListener('change', updateView);
+            document.getElementById('filter-dari-tanggal').addEventListener('change', updateView);
+            document.getElementById('filter-ke-tanggal').addEventListener('change', updateView);
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const range = parseInt(this.dataset.range);
+                    const toDate = new Date();
+                    const fromDate = new Date();
+                    fromDate.setDate(toDate.getDate() - range);
+                    document.getElementById('filter-ke-tanggal').valueAsDate = toDate;
+                    document.getElementById('filter-dari-tanggal').valueAsDate = fromDate;
+                    updateView();
+                });
+            });
+
+            fetchData();
+        });
+    </script>
+    
+    <script src="main.js"></script>
+</body>
+</html>
