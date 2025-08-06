@@ -17,8 +17,9 @@
 <body class="bg-gray-100">
 
     <div class="flex h-screen">
-        <!-- Sidebar -->
+        <!-- 1. Placeholder untuk sidebar -->
         <aside id="sidebar-placeholder" class="w-64 bg-white shadow-md flex flex-col"></aside>
+
         <!-- Main Content -->
         <main class="flex-1 p-6 sm:p-10 overflow-y-auto">
             <header class="mb-8">
@@ -90,10 +91,10 @@
             </div>
         </main>
     </div>
-
+    
+    <!-- 2. Skrip khusus untuk halaman dashboard -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // --- KONFIGURASI PENTING ---
             const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzcjowpZK5bRM2g5VQ77iG3KmYP6ff9u2eV8CJQOxwB3LuxeBOYHEXrcY738IQ3AVmC/exec';
 
             const userData = JSON.parse(localStorage.getItem('userData'));
@@ -105,7 +106,6 @@
             let fullData = {};
             let kasChartInstance, tabunganChartInstance;
 
-            // --- FUNGSI UTAMA & PEMANGGILAN DATA ---
             async function fetchData() {
                 try {
                     const response = await fetch(WEB_APP_URL, {
@@ -282,10 +282,6 @@
                 });
             }
             
-            document.getElementById('logout-button').addEventListener('click', () => {
-                localStorage.removeItem('userData');
-                window.location.href = 'login.html';
-            });
             document.getElementById('kas-startdate').addEventListener('change', () => renderKasChart(fullData.kas || []));
             document.getElementById('kas-enddate').addEventListener('change', () => renderKasChart(fullData.kas || []));
             document.getElementById('tabungan-startdate').addEventListener('change', () => renderTabunganChart(fullData.tabungan || []));
@@ -294,6 +290,8 @@
             fetchData();
         });
     </script>
+    
+    <!-- 3. Memuat skrip sidebar di bagian akhir -->
     <script src="main.js"></script>
 </body>
 </html>
