@@ -23,36 +23,93 @@
             </header>
 
             <div class="bg-white shadow-md rounded-lg p-6">
-                <div class="flex items-center mb-6 border-b pb-4">
-                    <label for="tanggal-absensi" class="text-lg font-medium text-gray-700 mr-4">Pilih Tanggal:</label>
-                    <input type="date" id="tanggal-absensi" class="border-gray-300 rounded-md shadow-sm p-2">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
+                    <div class="flex items-center">
+                        <label for="tanggal-absensi" class="text-lg font-medium text-gray-700 mr-4">Tanggal:</label>
+                        <input type="date" id="tanggal-absensi" class="border-gray-300 rounded-md shadow-sm p-2">
+                    </div>
+                    <button id="add-absensi-btn" class="w-full md:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                        Tambah Absen
+                    </button>
                 </div>
                 
-                <!-- Container untuk Tampilan Data & Input -->
-                <div id="content-container">
-                    <!-- Akan diisi oleh JavaScript -->
+                <div id="view-container">
+                    <div id="absensi-table-container" class="overflow-x-auto">
+                        <table id="absensi-table" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Siswa</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status Kehadiran</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Keterangan</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="absensi-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                    <div id="blank-state-view" class="text-center py-10 text-gray-500 hidden">
+                        Belum ada data absensi untuk tanggal ini.
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- Modal Form Tambah/Edit Absensi -->
+    <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
+            <h3 id="modal-title" class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Catat Absensi</h3>
+            <form id="absensi-form">
+                <input type="hidden" id="absensi_id">
+                <div class="space-y-4">
+                    <div>
+                        <label for="nama_siswa_input" class="block text-sm font-medium text-gray-700">Nama Siswa</label>
+                        <input type="text" id="nama_siswa_input" list="siswa-list" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
+                        <datalist id="siswa-list"></datalist>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Status Kehadiran</label>
+                        <div id="status-radio-container" class="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+                            <!-- Radio buttons will be inserted here by JS -->
+                        </div>
+                    </div>
+                    <div>
+                        <label for="keterangan" class="block text-sm font-medium text-gray-700">Keterangan</label>
+                        <textarea id="keterangan" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"></textarea>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="cancel-form-btn" class="bg-white py-2 px-4 border border-gray-300 rounded-md">Batal</button>
+                    <button type="submit" id="save-form-btn" class="py-2 px-4 border border-transparent rounded-md text-white bg-blue-600">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywZvxjwx6ua_-GOsnAnwqwoRVAsQnvXOmWQrVlxl08J4tOlfuq04rDGbqIrwNIb0zB/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuqNMB1B4ZoVnP02RgnNrGPiOmIcUH_OG_uI1GWV5rFCaV7RLisiBs8wU087GCweHw/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
             const tanggalInput = document.getElementById('tanggal-absensi');
-            const contentContainer = document.getElementById('content-container');
-
+            const addAbsensiBtn = document.getElementById('add-absensi-btn');
+            const formModal = document.getElementById('form-modal');
+            const absensiForm = document.getElementById('absensi-form');
+            const cancelFormBtn = document.getElementById('cancel-form-btn');
+            const saveFormBtn = document.getElementById('save-form-btn');
+            const modalTitle = document.getElementById('modal-title');
+            const absensiTable = document.getElementById('absensi-table');
+            const absensiTableBody = document.getElementById('absensi-table-body');
+            const blankStateView = document.getElementById('blank-state-view');
+            
             let allSiswa = [];
+            let currentAbsensi = [];
 
-            // Set tanggal hari ini sebagai default
             tanggalInput.value = new Date().toISOString().split('T')[0];
             
             async function fetchData(tanggal) {
-                contentContainer.innerHTML = `<div class="text-center py-10 text-gray-500">Memuat data...</div>`;
-
+                showLoading();
                 try {
                     const response = await fetch(WEB_APP_URL, {
                         method: 'POST', redirect: 'follow',
@@ -62,145 +119,182 @@
                     const data = await response.json();
                     if (data.status === 'success') {
                         allSiswa = data.siswa;
-                        // Jika sudah ada data absensi, tampilkan tabel
-                        if (data.absensi && data.absensi.length > 0) {
-                            renderTable(data.absensi);
-                        } else {
-                        // Jika belum, tampilkan tombol untuk memulai
-                            renderStartButton();
-                        }
+                        currentAbsensi = data.absensi;
+                        renderTable(currentAbsensi);
                     } else { showError(data.message); }
                 } catch (error) { showError(error.message); }
             }
 
             function renderTable(absensiList) {
-                let tableHTML = `
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Siswa</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status Kehadiran</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                `;
-                absensiList.forEach(absen => {
-                    const siswa = allSiswa.find(s => s.siswa_id === absen.siswa_id);
-                    tableHTML += `
-                        <tr>
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">${siswa ? siswa.nama_siswa : 'Siswa Dihapus'}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">${absen.status_kehadiran}</td>
-                        </tr>
-                    `;
-                });
-                tableHTML += `</tbody></table></div>`;
-                contentContainer.innerHTML = tableHTML;
-            }
-
-            function renderStartButton() {
-                contentContainer.innerHTML = `
-                    <div class="text-center py-10">
-                        <p class="text-gray-500 mb-4">Belum ada data absensi untuk tanggal ini.</p>
-                        <button id="start-absensi-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                            Mulai Absensi
-                        </button>
-                    </div>
-                `;
-                document.getElementById('start-absensi-btn').addEventListener('click', () => {
-                    renderInputForm();
-                });
-            }
-
-            function renderInputForm() {
-                // Urutkan siswa berdasarkan nama
-                const sortedSiswa = allSiswa.sort((a, b) => a.nama_siswa.localeCompare(b.nama_siswa));
-                
-                let formHTML = `<form id="absensi-form"><div class="space-y-4">`;
-                
-                if (sortedSiswa.length === 0) {
-                    formHTML += `<p class="text-center text-gray-500">Tidak ada siswa aktif yang bisa diabsen.</p>`;
-                } else {
-                    sortedSiswa.forEach(siswa => {
-                        formHTML += `
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center border p-4 rounded-md">
-                                <div class="font-medium text-gray-800">${siswa.nama_siswa}</div>
-                                <div class="flex flex-wrap gap-x-4 gap-y-2 col-span-2">
-                                    ${['Hadir', 'Sakit', 'Izin', 'Tanpa Keterangan'].map(status => `
-                                        <div>
-                                            <input type="radio" id="${siswa.siswa_id}-${status}" name="status-${siswa.siswa_id}" value="${status}" class="mr-2" required>
-                                            <label for="${siswa.siswa_id}-${status}">${status}</label>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-
-                formHTML += `</div><div class="flex justify-end mt-8">
-                                <button type="submit" id="save-absensi-btn" class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                                    Simpan Absensi
-                                </button>
-                            </div></form>`;
-                
-                contentContainer.innerHTML = formHTML;
-
-                document.getElementById('absensi-form').addEventListener('submit', handleFormSubmit);
-            }
-
-            async function handleFormSubmit(e) {
-                e.preventDefault();
-                const saveBtn = document.getElementById('save-absensi-btn');
-                saveBtn.disabled = true;
-                saveBtn.textContent = 'Menyimpan...';
-
-                const records = [];
-                allSiswa.forEach(siswa => {
-                    const checkedRadio = document.querySelector(`input[name="status-${siswa.siswa_id}"]:checked`);
-                    if (checkedRadio) {
-                        records.push({
-                            siswa_id: siswa.siswa_id,
-                            status_kehadiran: checkedRadio.value,
-                        });
-                    }
-                });
-
-                if (records.length < allSiswa.length) {
-                    alert('Harap isi status kehadiran untuk semua siswa.');
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = 'Simpan Absensi';
+                absensiTableBody.innerHTML = '';
+                if (!absensiList || absensiList.length === 0) {
+                    showEmpty();
                     return;
                 }
+                absensiTable.classList.remove('hidden');
+                blankStateView.classList.add('hidden');
+
+                absensiList.forEach(absen => {
+                    const siswa = allSiswa.find(s => s.siswa_id === absen.siswa_id);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${siswa ? siswa.nama_siswa : 'Siswa Dihapus'}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${absen.status_kehadiran}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${absen.keterangan || '-'}</td>
+                        <td class="px-6 py-4 text-right text-sm font-medium">
+                            <button class="text-indigo-600 hover:text-indigo-900" onclick="editAbsensi('${absen.absensi_id}')">Edit</button>
+                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="deleteAbsensi('${absen.absensi_id}')">Hapus</button>
+                        </td>
+                    `;
+                    absensiTableBody.appendChild(row);
+                });
+            }
+
+            function populateAutocomplete(siswaToDisplay) {
+                const dataList = document.getElementById('siswa-list');
+                dataList.innerHTML = '';
+                siswaToDisplay.forEach(siswa => {
+                    const option = document.createElement('option');
+                    option.value = siswa.nama_siswa;
+                    option.dataset.id = siswa.siswa_id;
+                    dataList.appendChild(option);
+                });
+            }
+
+            absensiForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                saveFormBtn.disabled = true;
+                saveFormBtn.textContent = 'Menyimpan...';
+
+                const selectedSiswaName = document.getElementById('nama_siswa_input').value;
+                const selectedOption = document.querySelector(`#siswa-list option[value='${selectedSiswaName}']`);
+                
+                if (!selectedOption && !document.getElementById('absensi_id').value) {
+                    alert('Silakan pilih siswa dari daftar.');
+                    saveFormBtn.disabled = false;
+                    saveFormBtn.textContent = 'Simpan';
+                    return;
+                }
+
+                const statusKehadiranElement = document.querySelector('input[name="status_kehadiran"]:checked');
+                if (!statusKehadiranElement) {
+                    alert('Silakan pilih status kehadiran.');
+                    saveFormBtn.disabled = false;
+                    saveFormBtn.textContent = 'Simpan';
+                    return;
+                }
+
+                const absensiId = document.getElementById('absensi_id').value;
+                const isUpdate = !!absensiId;
+                
+                const formData = {
+                    action: isUpdate ? 'updateAbsensi' : 'addSingleAbsensi',
+                    absensi_id: absensiId,
+                    tanggal: tanggalInput.value,
+                    siswa_id: isUpdate ? currentAbsensi.find(a => a.absensi_id === absensiId).siswa_id : selectedOption.dataset.id,
+                    status_kehadiran: statusKehadiranElement.value,
+                    keterangan: document.getElementById('keterangan').value
+                };
 
                 try {
                     const response = await fetch(WEB_APP_URL, {
                         method: 'POST', redirect: 'follow',
-                        body: JSON.stringify({ action: 'addAbsensi', tanggal: tanggalInput.value, records: records }),
+                        body: JSON.stringify(formData),
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                     });
                     const result = await response.json();
                     alert(result.message);
                     if (result.status === 'success') {
+                        closeFormModal();
                         fetchData(tanggalInput.value);
                     }
                 } catch (error) {
                     alert('Gagal menyimpan: ' + error.message);
                 } finally {
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = 'Simpan Absensi';
+                    saveFormBtn.disabled = false;
+                    saveFormBtn.textContent = 'Simpan';
                 }
-            }
-
-            tanggalInput.addEventListener('change', () => {
-                fetchData(tanggalInput.value);
             });
-            
-            const showError = (message) => {
-                contentContainer.innerHTML = `<div class="text-center py-10 text-red-500">Terjadi kesalahan: ${message}</div>`;
+
+            window.editAbsensi = (absensiId) => {
+                const absen = currentAbsensi.find(a => a.absensi_id === absensiId);
+                const siswa = allSiswa.find(s => s.siswa_id === absen.siswa_id);
+                if (!absen || !siswa) return;
+
+                modalTitle.textContent = 'Edit Absensi';
+                document.getElementById('absensi_id').value = absen.absensi_id;
+                document.getElementById('nama_siswa_input').value = siswa.nama_siswa;
+                document.getElementById('nama_siswa_input').disabled = true; // Nonaktifkan pilihan siswa saat edit
+                const statusRadio = document.querySelector(`input[name="status_kehadiran"][value="${absen.status_kehadiran}"]`);
+                if (statusRadio) statusRadio.checked = true;
+                document.getElementById('keterangan').value = absen.keterangan || '';
+                
+                openFormModal();
             };
 
-            // Muat data untuk tanggal hari ini saat halaman pertama kali dibuka
+            window.deleteAbsensi = async (absensiId) => {
+                if (confirm('Apakah Anda yakin ingin menghapus catatan absen ini?')) {
+                    try {
+                         const response = await fetch(WEB_APP_URL, {
+                            method: 'POST', redirect: 'follow',
+                            body: JSON.stringify({ action: 'deleteAbsensi', absensi_id: absensiId }),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        });
+                        const result = await response.json();
+                        alert(result.message);
+                        if(result.status === 'success') fetchData(tanggalInput.value);
+                    } catch(error) { alert('Gagal menghapus: ' + error.message); }
+                }
+            };
+
+            const openFormModal = () => {
+                formModal.classList.remove('hidden');
+            };
+            const closeFormModal = () => {
+                formModal.classList.add('hidden');
+                absensiForm.reset();
+                document.getElementById('absensi_id').value = '';
+            };
+            
+            addAbsensiBtn.addEventListener('click', () => {
+                modalTitle.textContent = 'Catat Absensi';
+                document.getElementById('nama_siswa_input').disabled = false;
+
+                // Filter siswa yang belum diabsen hari ini
+                const siswaSudahAbsenIds = currentAbsensi.map(a => a.siswa_id);
+                const siswaBelumAbsen = allSiswa.filter(s => !siswaSudahAbsenIds.includes(s.siswa_id));
+                
+                if(siswaBelumAbsen.length === 0) {
+                    alert('Semua siswa aktif sudah diabsen untuk tanggal ini.');
+                    return;
+                }
+
+                populateAutocomplete(siswaBelumAbsen);
+                openFormModal();
+            });
+
+            cancelFormBtn.addEventListener('click', closeFormModal);
+            tanggalInput.addEventListener('change', () => fetchData(tanggalInput.value));
+            
+            const showLoading = () => absensiTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
+            const showEmpty = () => {
+                absensiTable.classList.add('hidden');
+                blankStateView.classList.remove('hidden');
+            };
+            const showError = (message) => absensiTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-red-500">Terjadi kesalahan: ${message}</td></tr>`;
+            
+            function generateRadioButtons() {
+                const container = document.getElementById('status-radio-container');
+                const statuses = ['Hadir', 'Sakit', 'Izin', 'Tanpa Keterangan'];
+                container.innerHTML = statuses.map(status => `
+                    <div>
+                        <input type="radio" id="status-${status.replace(/\s+/g, '')}" name="status_kehadiran" value="${status}" class="mr-1" required>
+                        <label for="status-${status.replace(/\s+/g, '')}">${status}</label>
+                    </div>
+                `).join('');
+            }
+
+            generateRadioButtons();
             fetchData(tanggalInput.value);
         });
     </script>
