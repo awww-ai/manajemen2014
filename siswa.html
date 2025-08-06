@@ -13,7 +13,7 @@
 <body class="bg-gray-100">
 
     <div class="flex h-screen">
-        <!-- 1. Placeholder untuk sidebar -->
+        <!-- Sidebar Placeholder -->
         <aside id="sidebar-placeholder" class="w-64 bg-white shadow-md flex flex-col"></aside>
 
         <!-- Main Content -->
@@ -31,7 +31,7 @@
 
             <div class="bg-white shadow-md rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
+                    <table id="siswa-table" class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Siswa</th>
@@ -43,11 +43,14 @@
                         <tbody id="siswa-table-body" class="bg-white divide-y divide-gray-200"></tbody>
                     </table>
                 </div>
+                <div id="blank-state" class="text-center py-10 text-gray-500 hidden">
+                    Belum ada data siswa.
+                </div>
             </div>
         </main>
     </div>
 
-    <!-- Modal Form (Tidak ada perubahan) -->
+    <!-- Modal Form -->
     <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
             <h3 id="modal-title" class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Tambah Siswa Baru</h3>
@@ -90,7 +93,7 @@
         </div>
     </div>
 
-    <!-- Modal Detail (Tidak ada perubahan) -->
+    <!-- Modal Detail -->
     <div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
              <h3 class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Detail Siswa</h3>
@@ -101,29 +104,28 @@
         </div>
     </div>
 
-    <!-- 2. Skrip khusus untuk halaman siswa -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzuqNMB1B4ZoVnP02RgnNrGPiOmIcUH_OG_uI1GWV5rFCaV7RLisiBs8wU087GCweHw/exec';
-
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
-            // Definisi elemen DOM (tidak ada perubahan)
+            const table = document.getElementById('siswa-table');
             const tableBody = document.getElementById('siswa-table-body');
+            const blankState = document.getElementById('blank-state');
             const addSiswaBtn = document.getElementById('add-siswa-btn');
             const formModal = document.getElementById('form-modal');
             const siswaForm = document.getElementById('siswa-form');
             const cancelFormBtn = document.getElementById('cancel-form-btn');
             const saveFormBtn = document.getElementById('save-form-btn');
+            const modalTitle = document.getElementById('modal-title');
+            const searchInput = document.getElementById('searchInput');
             const detailModal = document.getElementById('detail-modal');
             const detailContent = document.getElementById('detail-content');
             const closeDetailBtn = document.getElementById('close-detail-btn');
 
             let allSiswa = [];
 
-            // Semua fungsi (fetchData, renderTable, dll.) tetap sama
-            // ... (kode fungsi tidak berubah)
             async function fetchData() {
                 showLoading();
                 try {
@@ -143,7 +145,13 @@
 
             function renderTable(siswaList) {
                 tableBody.innerHTML = '';
-                if (!siswaList || siswaList.length === 0) { showEmpty(); return; }
+                if (!siswaList || siswaList.length === 0) {
+                    showEmpty();
+                    return;
+                }
+                table.classList.remove('hidden');
+                blankState.classList.add('hidden');
+
                 siswaList.forEach(siswa => {
                     const row = document.createElement('tr');
                     row.className = 'cursor-pointer hover:bg-gray-50';
@@ -166,8 +174,12 @@
                 saveFormBtn.disabled = true;
                 saveFormBtn.textContent = 'Menyimpan...';
 
+                const siswaId = document.getElementById('siswa_id').value;
+                const isUpdate = !!siswaId;
+
                 const formData = {
-                    action: 'addSiswa',
+                    action: isUpdate ? 'updateSiswa' : 'addSiswa',
+                    siswa_id: siswaId,
                     nama_siswa: document.getElementById('nama_siswa').value,
                     nama_orang_tua: document.getElementById('nama_orang_tua').value,
                     no_hp: document.getElementById('no_hp').value,
@@ -184,7 +196,10 @@
                     });
                     const result = await response.json();
                     alert(result.message);
-                    if (result.status === 'success') { closeFormModal(); fetchData(); }
+                    if (result.status === 'success') {
+                        closeFormModal();
+                        fetchData();
+                    }
                 } catch (error) {
                     alert('Gagal menyimpan: ' + error.message);
                 } finally {
@@ -207,49 +222,34 @@
                 const siswa = allSiswa.find(s => s.siswa_id === siswaId);
                 if (!siswa) return;
                 
-                const namaOrtu = siswa.nama_orang_tua || '-';
-                const fotoUrl = siswa.url_foto || 'https://placehold.co/150x150/e2e8f0/334155?text=No+Foto';
-                
                 detailContent.innerHTML = `
-                    <div class="flex justify-center"><img src="${fotoUrl}" alt="Foto Siswa" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200"></div>
-                    <p><strong>Nama:</strong> ${siswa.nama_siswa || '-'}</p>
-                    <p><strong>Nama Ortu:</strong> ${namaOrtu}</p>
+                    <div class="flex justify-center"><img src="${siswa.url_foto || 'https://placehold.co/150x150?text=No+Foto'}" alt="Foto Siswa" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200"></div>
+                    <p><strong>Nama:</strong> ${siswa.nama_siswa}</p>
+                    <p><strong>Nama Ortu:</strong> ${siswa.nama_orang_tua || '-'}</p>
                     <p><strong>No. HP:</strong> ${siswa.no_hp || '-'}</p>
-                    <p><strong>Status:</strong> ${siswa.status || '-'}</p>
+                    <p><strong>Status:</strong> ${siswa.status}</p>
                     ${siswa.url_berkas ? `<a href="${siswa.url_berkas}" target="_blank" class="block w-full text-center bg-green-500 text-white py-2 rounded-md hover:bg-green-600">Unduh Berkas</a>` : '<p>Berkas tidak tersedia.</p>'}
                 `;
                 detailModal.classList.remove('hidden');
             };
 
             window.editSiswa = (siswaId) => {
-        const siswa = allSiswa.find(s => s.siswa_id === siswaId);
-        if (!siswa) return;
+                const siswa = allSiswa.find(s => s.siswa_id === siswaId);
+                if (!siswa) return;
 
-        modalTitle.textContent = 'Edit Data Siswa';
-        document.getElementById('siswa_id').value = siswa.siswa_id;
-        document.getElementById('nama_siswa').value = siswa.nama_siswa;
-        document.getElementById('nama_orang_tua').value = siswa.nama_orang_tua;
-        document.getElementById('no_hp').value = siswa.no_hp;
-        document.getElementById('status').value = siswa.status;
-        
-        // Kosongkan input file karena kita tidak bisa mengisi ulang
-        document.getElementById('foto').value = '';
-        document.getElementById('berkas').value = '';
+                modalTitle.textContent = 'Edit Data Siswa';
+                document.getElementById('siswa_id').value = siswa.siswa_id;
+                document.getElementById('nama_siswa').value = siswa.nama_siswa;
+                document.getElementById('nama_orang_tua').value = siswa.nama_orang_tua;
+                document.getElementById('no_hp').value = siswa.no_hp;
+                document.getElementById('status').value = siswa.status;
+                
+                document.getElementById('foto').value = '';
+                document.getElementById('berkas').value = '';
 
-        openFormModal();
-    };
+                openFormModal();
+            };
 
-    // Ubah logika form submit untuk menangani update
-    siswaForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        // ... (logika loading)
-
-        const isUpdate = document.getElementById('siswa_id').value;
-        const formData = {
-            action: isUpdate ? 'updateSiswa' : 'addSiswa',
-            siswa_id: document.getElementById('siswa_id').value,
-            // ... (sisa field form)
-        };
             window.deleteSiswa = async (siswaId) => {
                 if (confirm('Apakah Anda yakin ingin menghapus siswa ini?')) {
                     try {
@@ -264,26 +264,39 @@
                     } catch(error) { alert('Gagal menghapus: ' + error.message); }
                 }
             };
-            
-            // PERUBAHAN: Logika logout dipindahkan ke main.js
-            // document.getElementById('logout-button').addEventListener('click', ...);
+
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredSiswa = allSiswa.filter(siswa => 
+                    siswa.nama_siswa.toLowerCase().includes(searchTerm) ||
+                    (siswa.nama_orang_tua && siswa.nama_orang_tua.toLowerCase().includes(searchTerm))
+                );
+                renderTable(filteredSiswa);
+            });
 
             const openFormModal = () => formModal.classList.remove('hidden');
-            const closeFormModal = () => { formModal.classList.add('hidden'); siswaForm.reset(); };
+            const closeFormModal = () => {
+                formModal.classList.add('hidden');
+                siswaForm.reset();
+                document.getElementById('siswa_id').value = '';
+                modalTitle.textContent = 'Tambah Siswa Baru';
+            };
             
             addSiswaBtn.addEventListener('click', openFormModal);
             cancelFormBtn.addEventListener('click', closeFormModal);
             closeDetailBtn.addEventListener('click', () => detailModal.classList.add('hidden'));
             
             const showLoading = () => tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
-            const showEmpty = () => tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Belum ada data siswa.</td></tr>`;
+            const showEmpty = () => {
+                table.classList.add('hidden');
+                blankState.classList.remove('hidden');
+            };
             const showError = (message) => alert('Terjadi kesalahan: ' + message);
 
             fetchData();
         });
     </script>
     
-    <!-- 3. Memuat skrip sidebar di bagian akhir -->
     <script src="main.js"></script>
 </body>
 </html>
