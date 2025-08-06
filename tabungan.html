@@ -28,6 +28,7 @@
                 </button>
             </header>
 
+            <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div class="bg-white p-6 rounded-lg shadow-md">
                     <p class="text-sm font-medium text-gray-500">Total Uang Tersedia</p>
@@ -39,7 +40,9 @@
                 </div>
             </div>
 
+            <!-- Controls and Data Display -->
             <div class="bg-white shadow-md rounded-lg p-6">
+                <!-- Filter Controls -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 pb-6 border-b">
                     <div>
                         <label for="filter-siswa" class="text-sm font-medium text-gray-700">Siswa</label>
@@ -269,7 +272,6 @@
 
             function renderTable(data) {
                 tableBody.innerHTML = '';
-                // PERUBAHAN: Mengurutkan data dari terbaru ke terlama
                 const sortedData = data.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
 
                 sortedData.forEach(t => {
@@ -347,7 +349,7 @@
                 const isUpdate = !!id;
 
                 const formData = {
-                    action: isUpdate ? 'updateRow' : 'addTransaksiTabungan',
+                    action: isUpdate ? 'updateRow' : 'addTransaksi',
                     sheetName: 'Tabungan',
                     id: id,
                     idColumnName: 'transaksi_tabungan_id',
@@ -360,6 +362,8 @@
                 };
                 if(isUpdate) {
                     formData.data.transaksi_tabungan_id = id;
+                } else {
+                    delete formData.data.transaksi_tabungan_id;
                 }
 
                 try {
