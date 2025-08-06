@@ -164,6 +164,10 @@
             const formModal = document.getElementById('form-modal');
             const transaksiForm = document.getElementById('transaksi-form');
             const modalTitle = document.getElementById('modal-title');
+            // --- PERBAIKAN DI SINI ---
+            const addTransaksiBtn = document.getElementById('add-transaksi-btn');
+            const cancelFormBtn = document.getElementById('cancel-form-btn');
+
 
             // --- FUNGSI UTAMA ---
             async function fetchData() {
@@ -302,7 +306,7 @@
                 viewChartBtn.classList.remove('bg-white', 'text-blue-600');
             });
 
-            document.getElementById('add-transaksi-btn').addEventListener('click', () => {
+            addTransaksiBtn.addEventListener('click', () => {
                 transaksiForm.reset();
                 document.getElementById('transaksi_tabungan_id').value = '';
                 modalTitle.textContent = 'Tambah Transaksi';
@@ -340,7 +344,8 @@
                         jumlah: document.getElementById('jumlah').value,
                     }
                 };
-                if(!id) formData.data.transaksi_tabungan_id = Utilities.getUuid(); // Placeholder, ID asli dibuat di backend
+                // Hapus ID dari data jika ini adalah entri baru, karena ID akan dibuat oleh backend
+                if(!id) delete formData.data.transaksi_tabungan_id;
 
                 try {
                     const response = await fetch(WEB_APP_URL, {
@@ -416,7 +421,7 @@
                 let csvContent = "data:text/csv;charset=utf-8,Tanggal,Nama Siswa,Jenis,Jumlah\n";
                 getFilteredData().forEach(t => {
                     const siswa = allSiswa.find(s => s.siswa_id === t.siswa_id);
-                    csvContent += `${new Date(t.tanggal).toLocaleDateString('id-ID')},${siswa ? siswa.nama_siswa : 'N/A'},${t.jenis_transaksi},${t.jumlah}\n`;
+                    csvContent += `${new Date(t.tanggal).toLocaleDateString('id-ID')},"${siswa ? siswa.nama_siswa : 'N/A'}",${t.jenis_transaksi},${t.jumlah}\n`;
                 });
                 const encodedUri = encodeURI(csvContent);
                 const link = document.createElement("a");
@@ -424,6 +429,7 @@
                 link.setAttribute("download", "laporan-tabungan.csv");
                 document.body.appendChild(link);
                 link.click();
+                document.body.removeChild(link);
             });
 
             fetchData();
