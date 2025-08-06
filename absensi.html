@@ -29,7 +29,7 @@
                         <input type="date" id="tanggal-absensi" class="border-gray-300 rounded-md shadow-sm p-2">
                     </div>
                     <button id="add-absensi-btn" class="w-full md:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                        Tambah Absen (Susulan)
+                        Tambah / Ubah Absen
                     </button>
                 </div>
                 
@@ -40,30 +40,26 @@
         </main>
     </div>
 
-    <!-- Modal Form Tambah/Edit Absensi Individual -->
-    <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
+    <!-- Modal Form EDIT Absensi Individual -->
+    <div id="edit-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
-            <h3 id="modal-title" class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Catat Absensi</h3>
-            <form id="absensi-form-individual">
-                <input type="hidden" id="absensi_id">
+            <h3 id="edit-modal-title" class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Edit Absensi</h3>
+            <form id="absensi-form-edit">
+                <input type="hidden" id="edit_absensi_id">
                 <div class="space-y-4">
-                    <div>
-                        <label for="nama_siswa_input" class="block text-sm font-medium text-gray-700">Nama Siswa</label>
-                        <input type="text" id="nama_siswa_input" list="siswa-list" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                        <datalist id="siswa-list"></datalist>
-                    </div>
+                    <p class="font-medium">Nama Siswa: <span id="edit_nama_siswa"></span></p>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Status Kehadiran</label>
-                        <div id="status-radio-container" class="mt-2 flex flex-wrap gap-x-4 gap-y-2"></div>
+                        <div id="edit-status-radio-container" class="mt-2 flex flex-wrap gap-x-4 gap-y-2"></div>
                     </div>
                     <div>
-                        <label for="keterangan" class="block text-sm font-medium text-gray-700">Keterangan</label>
-                        <textarea id="keterangan" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"></textarea>
+                        <label for="edit_keterangan" class="block text-sm font-medium text-gray-700">Keterangan</label>
+                        <textarea id="edit_keterangan" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"></textarea>
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" id="cancel-form-btn" class="bg-white py-2 px-4 border border-gray-300 rounded-md">Batal</button>
-                    <button type="submit" id="save-form-btn" class="py-2 px-4 border border-transparent rounded-md text-white bg-blue-600">Simpan</button>
+                    <button type="button" id="cancel-edit-btn" class="bg-white py-2 px-4 border border-gray-300 rounded-md">Batal</button>
+                    <button type="submit" id="save-edit-btn" class="py-2 px-4 border border-transparent rounded-md text-white bg-blue-600">Simpan Perubahan</button>
                 </div>
             </form>
         </div>
@@ -78,10 +74,9 @@
             const tanggalInput = document.getElementById('tanggal-absensi');
             const contentContainer = document.getElementById('content-container');
             const addAbsensiBtn = document.getElementById('add-absensi-btn');
-            const formModal = document.getElementById('form-modal');
-            const absensiFormIndividual = document.getElementById('absensi-form-individual');
-            const cancelFormBtn = document.getElementById('cancel-form-btn');
-            const modalTitle = document.getElementById('modal-title');
+            const editModal = document.getElementById('edit-modal');
+            const absensiFormEdit = document.getElementById('absensi-form-edit');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
 
             let allSiswa = [];
             let currentAbsensi = [];
@@ -123,7 +118,11 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                 `;
-                absensiList.forEach(absen => {
+                absensiList.sort((a,b) => {
+                    const siswaA = allSiswa.find(s => s.siswa_id === a.siswa_id)?.nama_siswa || '';
+                    const siswaB = allSiswa.find(s => s.siswa_id === b.siswa_id)?.nama_siswa || '';
+                    return siswaA.localeCompare(siswaB);
+                }).forEach(absen => {
                     const siswa = allSiswa.find(s => s.siswa_id === absen.siswa_id);
                     tableHTML += `
                         <tr>
@@ -150,14 +149,14 @@
                         </button>
                     </div>
                 `;
-                document.getElementById('start-absensi-btn').addEventListener('click', renderMassInputForm);
+                document.getElementById('start-absensi-btn').addEventListener('click', () => renderMassInputForm(allSiswa));
             }
 
-            function renderMassInputForm() {
-                const sortedSiswa = allSiswa.sort((a, b) => a.nama_siswa.localeCompare(b.nama_siswa));
+            function renderMassInputForm(siswaList) {
+                const sortedSiswa = siswaList.sort((a, b) => a.nama_siswa.localeCompare(b.nama_siswa));
                 let formHTML = `<form id="absensi-form-massal"><div class="space-y-4">`;
                 if (sortedSiswa.length === 0) {
-                    formHTML += `<p class="text-center text-gray-500">Tidak ada siswa aktif.</p>`;
+                    formHTML += `<p class="text-center text-gray-500">Tidak ada siswa yang perlu diabsen.</p>`;
                 } else {
                     sortedSiswa.forEach(siswa => {
                         formHTML += `
@@ -191,14 +190,18 @@
                 saveBtn.textContent = 'Menyimpan...';
 
                 const records = [];
-                allSiswa.forEach(siswa => {
-                    const checkedRadio = document.querySelector(`input[name="status-${siswa.siswa_id}"]:checked`);
+                const form = e.target;
+                const siswaDiForm = Array.from(form.querySelectorAll('[name^="status-"]')).map(el => el.name.replace('status-',''));
+                const uniqueSiswaIds = [...new Set(siswaDiForm)];
+
+                uniqueSiswaIds.forEach(siswaId => {
+                    const checkedRadio = form.querySelector(`input[name="status-${siswaId}"]:checked`);
                     if (checkedRadio) {
-                        records.push({ siswa_id: siswa.siswa_id, status_kehadiran: checkedRadio.value });
+                        records.push({ siswa_id: siswaId, status_kehadiran: checkedRadio.value });
                     }
                 });
 
-                if (records.length < allSiswa.length) {
+                if (records.length < uniqueSiswaIds.length) {
                     alert('Harap isi status kehadiran untuk semua siswa.');
                     saveBtn.disabled = false;
                     saveBtn.textContent = 'Simpan Semua';
@@ -221,38 +224,19 @@
                 }
             }
 
-            absensiFormIndividual.addEventListener('submit', async function(e) {
+            absensiFormEdit.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                const saveBtn = document.getElementById('save-form-btn');
+                const saveBtn = document.getElementById('save-edit-btn');
                 saveBtn.disabled = true;
                 saveBtn.textContent = 'Menyimpan...';
 
-                const selectedSiswaName = document.getElementById('nama_siswa_input').value;
-                const selectedOption = document.querySelector(`#siswa-list option[value='${selectedSiswaName}']`);
-                const absensiId = document.getElementById('absensi_id').value;
-                const isUpdate = !!absensiId;
-
-                if (!selectedOption && !isUpdate) {
-                    alert('Silakan pilih siswa dari daftar.');
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = 'Simpan';
-                    return;
-                }
-                const statusKehadiranElement = document.querySelector('#form-modal input[name="status_kehadiran"]:checked');
-                if (!statusKehadiranElement) {
-                    alert('Silakan pilih status kehadiran.');
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = 'Simpan';
-                    return;
-                }
-
+                const statusKehadiranElement = document.querySelector('#edit-modal input[name="edit_status_kehadiran"]:checked');
                 const formData = {
-                    action: isUpdate ? 'updateAbsensi' : 'addSingleAbsensi',
-                    absensi_id: absensiId,
-                    tanggal: tanggalInput.value,
-                    siswa_id: isUpdate ? currentAbsensi.find(a => a.absensi_id === absensiId).siswa_id : selectedOption.dataset.id,
+                    action: 'updateAbsensi',
+                    absensi_id: document.getElementById('edit_absensi_id').value,
                     status_kehadiran: statusKehadiranElement.value,
-                    keterangan: document.getElementById('keterangan').value
+                    keterangan: document.getElementById('edit_keterangan').value,
+                    tanggal: tanggalInput.value // Kirim tanggal untuk memastikan konsistensi
                 };
 
                 try {
@@ -264,14 +248,14 @@
                     const result = await response.json();
                     alert(result.message);
                     if (result.status === 'success') {
-                        closeFormModal();
+                        closeEditModal();
                         fetchData(tanggalInput.value);
                     }
                 } catch (error) {
                     alert('Gagal menyimpan: ' + error.message);
                 } finally {
                     saveBtn.disabled = false;
-                    saveBtn.textContent = 'Simpan';
+                    saveBtn.textContent = 'Simpan Perubahan';
                 }
             });
 
@@ -279,14 +263,14 @@
                 const absen = currentAbsensi.find(a => a.absensi_id === absensiId);
                 const siswa = allSiswa.find(s => s.siswa_id === absen.siswa_id);
                 if (!absen || !siswa) return;
-                modalTitle.textContent = 'Edit Absensi';
-                document.getElementById('absensi_id').value = absen.absensi_id;
-                document.getElementById('nama_siswa_input').value = siswa.nama_siswa;
-                document.getElementById('nama_siswa_input').disabled = true;
-                const statusRadio = document.querySelector(`#form-modal input[name="status_kehadiran"][value="${absen.status_kehadiran}"]`);
+                
+                document.getElementById('edit_absensi_id').value = absen.absensi_id;
+                document.getElementById('edit_nama_siswa').textContent = siswa.nama_siswa;
+                const statusRadio = document.querySelector(`#edit-modal input[name="edit_status_kehadiran"][value="${absen.status_kehadiran}"]`);
                 if (statusRadio) statusRadio.checked = true;
-                document.getElementById('keterangan').value = absen.keterangan || '';
-                openFormModal();
+                document.getElementById('edit_keterangan').value = absen.keterangan || '';
+                
+                openEditModal();
             };
 
             window.deleteAbsensi = async (absensiId) => {
@@ -304,49 +288,34 @@
                 }
             };
 
-            const openFormModal = () => formModal.classList.remove('hidden');
-            const closeFormModal = () => {
-                formModal.classList.add('hidden');
-                absensiFormIndividual.reset();
-                document.getElementById('absensi_id').value = '';
+            const openEditModal = () => editModal.classList.remove('hidden');
+            const closeEditModal = () => {
+                editModal.classList.add('hidden');
+                absensiFormEdit.reset();
             };
             
             addAbsensiBtn.addEventListener('click', () => {
-                modalTitle.textContent = 'Tambah Absen (Susulan)';
-                document.getElementById('nama_siswa_input').disabled = false;
-                const siswaSudahHadirIds = currentAbsensi.filter(a => a.status_kehadiran === 'Hadir').map(a => a.siswa_id);
-                const siswaBisaDitambahkan = allSiswa.filter(s => !siswaSudahHadirIds.includes(s.siswa_id));
-                if(siswaBisaDitambahkan.length === 0) {
-                    alert('Semua siswa aktif sudah hadir atau diabsen untuk tanggal ini.');
+                const siswaSudahAbsenIds = currentAbsensi.map(a => a.siswa_id);
+                const siswaBelumAbsen = allSiswa.filter(s => !siswaSudahAbsenIds.includes(s.siswa_id));
+                if(siswaBelumAbsen.length === 0) {
+                    alert('Semua siswa aktif sudah diabsen untuk tanggal ini.');
                     return;
                 }
-                populateAutocomplete(siswaBisaDitambahkan);
-                openFormModal();
+                renderMassInputForm(siswaBelumAbsen);
             });
 
-            function populateAutocomplete(siswaToDisplay) {
-                const dataList = document.getElementById('siswa-list');
-                dataList.innerHTML = '';
-                siswaToDisplay.forEach(siswa => {
-                    const option = document.createElement('option');
-                    option.value = siswa.nama_siswa;
-                    option.dataset.id = siswa.siswa_id;
-                    dataList.appendChild(option);
-                });
-            }
-
-            cancelFormBtn.addEventListener('click', closeFormModal);
+            cancelEditBtn.addEventListener('click', closeEditModal);
             tanggalInput.addEventListener('change', () => fetchData(tanggalInput.value));
             
             const showError = (message) => contentContainer.innerHTML = `<div class="text-center py-10 text-red-500">Terjadi kesalahan: ${message}</div>`;
             
             function generateRadioButtons() {
-                const container = document.getElementById('status-radio-container');
+                const container = document.getElementById('edit-status-radio-container');
                 const statuses = ['Hadir', 'Sakit', 'Izin', 'Tanpa Keterangan'];
                 container.innerHTML = statuses.map(status => `
                     <div>
-                        <input type="radio" id="status-${status.replace(/\s+/g, '')}" name="status_kehadiran" value="${status}" class="mr-1" required>
-                        <label for="status-${status.replace(/\s+/g, '')}">${status}</label>
+                        <input type="radio" id="edit-status-${status.replace(/\s+/g, '')}" name="edit_status_kehadiran" value="${status}" class="mr-1" required>
+                        <label for="edit-status-${status.replace(/\s+/g, '')}">${status}</label>
                     </div>
                 `).join('');
             }
