@@ -13,9 +13,10 @@
 <body class="bg-gray-100">
 
     <div class="flex h-screen">
-        <!-- Sidebar -->
+        <!-- 1. Placeholder untuk sidebar -->
         <aside id="sidebar-placeholder" class="w-64 bg-white shadow-md flex flex-col"></aside>
 
+        <!-- Main Content -->
         <main class="flex-1 p-6 sm:p-10 overflow-y-auto">
             <header class="mb-8">
                 <h1 class="text-3xl font-bold text-gray-800">Kesiswaan</h1>
@@ -46,7 +47,7 @@
         </main>
     </div>
 
-    <!-- Modal Form -->
+    <!-- Modal Form (Tidak ada perubahan) -->
     <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
             <h3 id="modal-title" class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Tambah Siswa Baru</h3>
@@ -89,7 +90,7 @@
         </div>
     </div>
 
-    <!-- Modal Detail -->
+    <!-- Modal Detail (Tidak ada perubahan) -->
     <div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
              <h3 class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Detail Siswa</h3>
@@ -100,6 +101,7 @@
         </div>
     </div>
 
+    <!-- 2. Skrip khusus untuk halaman siswa -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzcjowpZK5bRM2g5VQ77iG3KmYP6ff9u2eV8CJQOxwB3LuxeBOYHEXrcY738IQ3AVmC/exec';
@@ -107,6 +109,7 @@
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
+            // Definisi elemen DOM (tidak ada perubahan)
             const tableBody = document.getElementById('siswa-table-body');
             const addSiswaBtn = document.getElementById('add-siswa-btn');
             const formModal = document.getElementById('form-modal');
@@ -119,6 +122,8 @@
 
             let allSiswa = [];
 
+            // Semua fungsi (fetchData, renderTable, dll.) tetap sama
+            // ... (kode fungsi tidak berubah)
             async function fetchData() {
                 showLoading();
                 try {
@@ -198,21 +203,10 @@
                 });
             }
 
-            // --- PERUBAHAN DI SINI ---
             window.viewDetails = (siswaId) => {
                 const siswa = allSiswa.find(s => s.siswa_id === siswaId);
+                if (!siswa) return;
                 
-                // --- DEBUGGING ---
-                // Baris ini akan menampilkan semua data siswa yang diterima dari server di console browser (F12)
-                // Cek di sini apakah 'nama_orang_tua' dan 'url_foto' ada dan berisi nilai yang benar.
-                console.log("Data untuk siswa yang diklik:", siswa); 
-                
-                if (!siswa) {
-                    console.error("Siswa dengan ID " + siswaId + " tidak ditemukan di data.");
-                    return;
-                }
-
-                // Menggunakan variabel agar lebih mudah dibaca dan aman dari nilai null/undefined
                 const namaOrtu = siswa.nama_orang_tua || '-';
                 const fotoUrl = siswa.url_foto || 'https://placehold.co/150x150/e2e8f0/334155?text=No+Foto';
                 
@@ -243,6 +237,9 @@
                     } catch(error) { alert('Gagal menghapus: ' + error.message); }
                 }
             };
+            
+            // PERUBAHAN: Logika logout dipindahkan ke main.js
+            // document.getElementById('logout-button').addEventListener('click', ...);
 
             const openFormModal = () => formModal.classList.remove('hidden');
             const closeFormModal = () => { formModal.classList.add('hidden'); siswaForm.reset(); };
@@ -250,7 +247,6 @@
             addSiswaBtn.addEventListener('click', openFormModal);
             cancelFormBtn.addEventListener('click', closeFormModal);
             closeDetailBtn.addEventListener('click', () => detailModal.classList.add('hidden'));
-            document.getElementById('logout-button').addEventListener('click', () => { localStorage.removeItem('userData'); window.location.href = 'login.html'; });
             
             const showLoading = () => tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
             const showEmpty = () => tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Belum ada data siswa.</td></tr>`;
@@ -259,6 +255,8 @@
             fetchData();
         });
     </script>
+    
+    <!-- 3. Memuat skrip sidebar di bagian akhir -->
     <script src="main.js"></script>
 </body>
 </html>
