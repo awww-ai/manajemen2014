@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi - Sistem Informasi SSJ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen">
+        <!-- Sidebar Placeholder -->
+        <aside id="sidebar-placeholder" class="w-64 bg-white shadow-md flex flex-col"></aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 sm:p-10 overflow-y-auto">
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Absensi</h1>
+            </header>
+
+            <div class="bg-white shadow-md rounded-lg p-6">
+                <div class="flex items-center mb-6 border-b pb-4">
+                    <label for="tanggal-absensi" class="text-lg font-medium text-gray-700 mr-4">Pilih Tanggal:</label>
+                    <input type="date" id="tanggal-absensi" class="border-gray-300 rounded-md shadow-sm p-2">
+                </div>
+                
+                <form id="absensi-form">
+                    <div id="absensi-list" class="space-y-4">
+                        <!-- Daftar siswa untuk diabsen akan muncul di sini -->
+                        <div id="loading-state" class="text-center py-10 text-gray-500">
+                            Pilih tanggal untuk memulai absensi.
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end mt-8">
+                        <button type="submit" id="save-absensi-btn" class="hidden inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                            Simpan Absensi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzQ7Uc72hinbAUzesXzDHR-0aWAIh8ZhRZcWKBZxhiQNLYkeearIt3waPA-SnOZY6qH/exec';
+
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            if (!userData) { window.location.href = 'login.html'; return; }
+
+            const tanggalInput = document.getElementById('tanggal-absensi');
+            const absensiList = document.getElementById('absensi-list');
+            const saveBtn = document.getElementById('save-absensi-btn');
+            const absensiForm = document.getElementById('absensi-form');
+            const loadingState = document.getElementById('loading-state');
+
+            // Set tanggal hari ini sebagai default
+            tanggalInput.value = new Date().toISOString().split('T')[0];
+            
+            async function fetchData(tanggal) {
+                loadingState.textContent = 'Memuat data siswa...';
+                absensiList.innerHTML = '';
+                absensiList.appendChild(loadingState);
+                saveBtn.classList.add('hidden');
+
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        redirect: 'follow',
+                        body: JSON.stringify({ action: 'getAbsensiData', tanggal: tanggal }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        renderAbsensiList(data.siswa, data.absensi);
+                    } else { showError(data.message); }
+                } catch (error) { showError(error.message); }
+            }
+
+            function renderAbsensiList(siswaList, absensiList) {
+                absensiList.innerHTML = '';
+                if (!siswaList || siswaList.length === 0) {
+                    loadingState.textContent = 'Tidak ada siswa aktif yang ditemukan.';
+                    absensiList.appendChild(loadingState);
+                    saveBtn.classList.add('hidden');
+                    return;
+                }
+
+                siswaList.forEach(siswa => {
+                    const absensiSiswa = absensiList.find(a => a.siswa_id === siswa.siswa_id);
+                    
+                    const div = document.createElement('div');
+                    div.className = 'grid grid-cols-1 md:grid-cols-3 gap-4 items-center border p-4 rounded-md';
+                    div.innerHTML = `
+                        <div class="font-medium text-gray-800">${siswa.nama_siswa}</div>
+                        <div class="flex flex-wrap gap-4">
+                            ${['Hadir', 'Sakit', 'Izin', 'Tanpa Keterangan'].map(status => `
+                                <div>
+                                    <input type="radio" id="${siswa.siswa_id}-${status}" name="status-${siswa.siswa_id}" value="${status}" class="mr-2" ${absensiSiswa && absensiSiswa.status_kehadiran === status ? 'checked' : ''} ${absensiSiswa ? 'disabled' : ''}>
+                                    <label for="${siswa.siswa_id}-${status}">${status}</label>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="text-sm text-gray-600">
+                           ${absensiSiswa ? `(Sudah diabsen: ${absensiSiswa.status_kehadiran})` : ''}
+                        </div>
+                    `;
+                    absensiList.appendChild(div);
+                });
+                
+                // Tampilkan tombol simpan jika ada siswa yang belum diabsen
+                const sudahDiabsenSemua = siswaList.every(s => absensiList.some(a => a.siswa_id === s.siswa_id));
+                if (!sudahDiabsenSemua) {
+                    saveBtn.classList.remove('hidden');
+                } else {
+                    saveBtn.classList.add('hidden');
+                }
+            }
+
+            absensiForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Menyimpan...';
+
+                const records = [];
+                const siswaInputs = document.querySelectorAll('#absensi-list input[type="radio"]:checked');
+                
+                siswaInputs.forEach(input => {
+                    const siswaId = input.name.replace('status-', '');
+                    records.push({
+                        siswa_id: siswaId,
+                        status_kehadiran: input.value,
+                        catatan: '' // Bisa ditambahkan input untuk catatan jika perlu
+                    });
+                });
+
+                if (records.length === 0) {
+                    alert('Pilih status kehadiran untuk setidaknya satu siswa.');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Simpan Absensi';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST', redirect: 'follow',
+                        body: JSON.stringify({ action: 'addAbsensi', tanggal: tanggalInput.value, records: records }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const result = await response.json();
+                    alert(result.message);
+                    if (result.status === 'success') {
+                        fetchData(tanggalInput.value); // Muat ulang data untuk tanggal yang sama
+                    }
+                } catch (error) {
+                    alert('Gagal menyimpan: ' + error.message);
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Simpan Absensi';
+                }
+            });
+
+            tanggalInput.addEventListener('change', () => {
+                fetchData(tanggalInput.value);
+            });
+
+            const showError = (message) => {
+                loadingState.textContent = 'Terjadi kesalahan: ' + message;
+                absensiList.innerHTML = '';
+                absensiList.appendChild(loadingState);
+            };
+
+            // Muat data untuk tanggal hari ini saat halaman pertama kali dibuka
+            fetchData(tanggalInput.value);
+        });
+    </script>
+    
+    <script src="main.js"></script>
+</body>
+</html>
