@@ -164,7 +164,6 @@
             const formModal = document.getElementById('form-modal');
             const transaksiForm = document.getElementById('transaksi-form');
             const modalTitle = document.getElementById('modal-title');
-            // --- PERBAIKAN DI SINI ---
             const addTransaksiBtn = document.getElementById('add-transaksi-btn');
             const cancelFormBtn = document.getElementById('cancel-form-btn');
 
@@ -232,6 +231,10 @@
 
             function populateSiswaFilters() {
                 const formSiswaList = document.getElementById('siswa-list-form');
+                // Kosongkan dulu untuk mencegah duplikasi saat refresh
+                filterSiswaEl.innerHTML = '<option value="semua">Semua Siswa</option>';
+                formSiswaList.innerHTML = '';
+
                 allSiswa.forEach(siswa => {
                     const option = document.createElement('option');
                     option.value = siswa.siswa_id;
@@ -331,21 +334,23 @@
                 }
                 
                 const id = document.getElementById('transaksi_tabungan_id').value;
+                const isUpdate = !!id;
+
                 const formData = {
-                    action: id ? 'updateRow' : 'addTransaksiTabungan',
+                    action: isUpdate ? 'updateRow' : 'addTransaksi',
                     sheetName: 'Tabungan',
-                    id: id,
                     idColumnName: 'transaksi_tabungan_id',
+                    id: id,
                     data: {
-                        transaksi_tabungan_id: id,
                         tanggal: document.getElementById('tanggal_transaksi').value,
                         siswa_id: selectedOption.dataset.id,
                         jenis_transaksi: document.getElementById('jenis_transaksi').value,
                         jumlah: document.getElementById('jumlah').value,
                     }
                 };
-                // Hapus ID dari data jika ini adalah entri baru, karena ID akan dibuat oleh backend
-                if(!id) delete formData.data.transaksi_tabungan_id;
+                if(isUpdate) {
+                    formData.data.transaksi_tabungan_id = id;
+                }
 
                 try {
                     const response = await fetch(WEB_APP_URL, {
