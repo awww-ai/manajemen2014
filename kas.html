@@ -50,17 +50,19 @@
                 <div class="mb-6 pb-6 border-b">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
-                            <label for="filter-sumber" class="text-sm font-medium text-gray-700">Sumber Pemasukan</label>
-                            <select id="filter-sumber" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
-                                <option value="semua">Semua Sumber</option>
-                                <option value="Iuran Siswa">Iuran Siswa</option>
-                                <option value="Lainnya">Lainnya</option>
-                            </select>
+                            <label for="filter-dari-tanggal" class="text-sm font-medium text-gray-700">Dari Tanggal</label>
+                            <input type="date" id="filter-dari-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
                         </div>
-                        <div id="filter-siswa-container" class="hidden">
-                            <label for="filter-siswa" class="text-sm font-medium text-gray-700">Nama Siswa</label>
-                            <input type="text" id="filter-siswa" list="siswa-list-filter" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
-                            <datalist id="siswa-list-filter"></datalist>
+                        <div>
+                            <label for="filter-ke-tanggal" class="text-sm font-medium text-gray-700">Ke Tanggal</label>
+                            <input type="date" id="filter-ke-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                        </div>
+                        <div class="flex items-end">
+                            <div class="flex space-x-2 w-full">
+                                <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="7">7H</button>
+                                <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="30">1B</button>
+                                <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="365">1T</button>
+                            </div>
                         </div>
                         <div>
                             <label for="filter-jenis" class="text-sm font-medium text-gray-700">Jenis Transaksi</label>
@@ -70,20 +72,20 @@
                                 <option value="Pengeluaran">Pengeluaran</option>
                             </select>
                         </div>
-                        <div>
-                            <label for="filter-dari-tanggal" class="text-sm font-medium text-gray-700">Dari Tanggal</label>
-                            <input type="date" id="filter-dari-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                        <div id="filter-sumber-container" class="hidden">
+                            <label for="filter-sumber" class="text-sm font-medium text-gray-700">Sumber Pemasukan</label>
+                            <select id="filter-sumber" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                                <option value="semua">Semua Sumber</option>
+                                <option value="Iuran Siswa">Iuran Siswa</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
                         </div>
-                        <div>
-                            <label for="filter-ke-tanggal" class="text-sm font-medium text-gray-700">Ke Tanggal</label>
-                            <input type="date" id="filter-ke-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                        <div id="filter-siswa-container" class="hidden">
+                            <label for="filter-siswa" class="text-sm font-medium text-gray-700">Nama Siswa</label>
+                            <select id="filter-siswa" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                                <option value="semua">Semua Siswa</option>
+                            </select>
                         </div>
-                    </div>
-                     <div class="flex items-center space-x-2 mt-4">
-                        <label class="text-sm font-medium text-gray-700">Preset:</label>
-                        <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="7">7H</button>
-                        <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="30">1B</button>
-                        <button class="preset-btn text-xs py-1 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="365">1T</button>
                     </div>
                 </div>
 
@@ -152,10 +154,9 @@
                         <input type="text" id="nama_siswa_input" list="siswa-list-form" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
                         <datalist id="siswa-list-form"></datalist>
                     </div>
-                    <div id="keterangan-container">
+                    <div>
                         <label for="keterangan" class="block text-sm font-medium text-gray-700">Keterangan</label>
-                        <!-- PERUBAHAN: Atribut 'required' dihapus dari sini -->
-                        <input type="text" id="keterangan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                        <input type="text" id="keterangan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
                     </div>
                     <div>
                         <label for="jumlah" class="block text-sm font-medium text-gray-700">Jumlah (Rp)</label>
@@ -221,8 +222,24 @@
             }
 
             function getFilteredData() {
-                // ... (Logika filter lengkap akan ditambahkan di sini)
-                return allTransactions;
+                const filterJenis = document.getElementById('filter-jenis').value;
+                const filterSumber = document.getElementById('filter-sumber').value;
+                const filterSiswa = document.getElementById('filter-siswa').value;
+                const fromDate = document.getElementById('filter-dari-tanggal').value ? new Date(document.getElementById('filter-dari-tanggal').value) : null;
+                const toDate = document.getElementById('filter-ke-tanggal').value ? new Date(document.getElementById('filter-ke-tanggal').value) : null;
+                if(fromDate) fromDate.setHours(0,0,0,0);
+                if(toDate) toDate.setHours(23,59,59,999);
+
+                return allTransactions.filter(t => {
+                    const tDate = new Date(t.tanggal);
+                    const jenisMatch = filterJenis === 'semua' || t.jenis_transaksi === filterJenis;
+                    const sumberMatch = filterSumber === 'semua' || t.sumber_pemasukan === filterSumber;
+                    const siswaMatch = !filterSiswa || filterSiswa === 'semua' || t.siswa_id === filterSiswa;
+                    const fromDateMatch = !fromDate || tDate >= fromDate;
+                    const toDateMatch = !toDate || tDate <= toDate;
+                    
+                    return jenisMatch && sumberMatch && siswaMatch && fromDateMatch && toDateMatch;
+                });
             }
 
             // --- FUNGSI TAMPILAN ---
@@ -236,16 +253,20 @@
             }
 
             function populateSiswaFilters() {
-                const filterSiswaList = document.getElementById('siswa-list-filter');
+                const filterSiswaSelect = document.getElementById('filter-siswa');
                 const formSiswaList = document.getElementById('siswa-list-form');
-                filterSiswaList.innerHTML = '';
+                filterSiswaSelect.innerHTML = '<option value="semua">Semua Siswa</option>';
                 formSiswaList.innerHTML = '';
                 allSiswa.forEach(siswa => {
                     const option = document.createElement('option');
-                    option.value = siswa.nama_siswa;
-                    option.dataset.id = siswa.siswa_id;
-                    filterSiswaList.appendChild(option.cloneNode(true));
-                    formSiswaList.appendChild(option.cloneNode(true));
+                    option.value = siswa.siswa_id;
+                    option.textContent = siswa.nama_siswa;
+                    filterSiswaSelect.appendChild(option.cloneNode(true));
+                    
+                    const dataListOption = document.createElement('option');
+                    dataListOption.value = siswa.nama_siswa;
+                    dataListOption.dataset.id = siswa.siswa_id;
+                    formSiswaList.appendChild(dataListOption);
                 });
             }
 
@@ -292,37 +313,20 @@
             const sumberPemasukanContainer = document.getElementById('sumber-pemasukan-container');
             const sumberPemasukanEl = document.getElementById('sumber_pemasukan');
             const formSiswaContainer = document.getElementById('form-siswa-container');
-            const keteranganContainer = document.getElementById('keterangan-container');
-            const keteranganInput = document.getElementById('keterangan');
             const siswaInput = document.getElementById('nama_siswa_input');
+            const keteranganInput = document.getElementById('keterangan');
 
-            // --- PERUBAHAN DI SINI ---
             function toggleFormFields() {
                 const jenis = jenisTransaksiEl.value;
                 const sumber = sumberPemasukanEl.value;
-
-                if (jenis === 'Pemasukan') {
-                    sumberPemasukanContainer.classList.remove('hidden');
-                    if (sumber === 'Iuran Siswa') {
-                        formSiswaContainer.classList.remove('hidden');
-                        keteranganContainer.classList.add('hidden');
-                        siswaInput.required = true;
-                        keteranganInput.required = false; // Jadikan tidak wajib
-                    } else { // Lainnya
-                        formSiswaContainer.classList.add('hidden');
-                        keteranganContainer.classList.remove('hidden');
-                        siswaInput.required = false;
-                        keteranganInput.required = true; // Jadikan wajib
-                    }
-                } else { // Pengeluaran
-                    sumberPemasukanContainer.classList.add('hidden');
+                sumberPemasukanContainer.classList.toggle('hidden', jenis !== 'Pemasukan');
+                if (jenis === 'Pemasukan' && sumber === 'Iuran Siswa') {
+                    formSiswaContainer.classList.remove('hidden');
+                } else {
                     formSiswaContainer.classList.add('hidden');
-                    keteranganContainer.classList.remove('hidden');
-                    siswaInput.required = false;
-                    keteranganInput.required = true; // Jadikan wajib
                 }
             }
-
+            
             jenisTransaksiEl.addEventListener('change', toggleFormFields);
             sumberPemasukanEl.addEventListener('change', toggleFormFields);
 
@@ -332,7 +336,7 @@
                 document.getElementById('transaksi_kas_id').value = '';
                 modalTitle.textContent = 'Tambah Transaksi Kas';
                 document.getElementById('tanggal_transaksi').value = new Date().toISOString().split('T')[0];
-                toggleFormFields(); // Atur tampilan form awal
+                toggleFormFields();
                 formModal.classList.remove('hidden');
             });
             document.getElementById('cancel-form-btn').addEventListener('click', () => formModal.classList.add('hidden'));
