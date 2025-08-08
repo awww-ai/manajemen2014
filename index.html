@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabungan - Sistem Informasi SSJ</title>
+    <title>Dashboard - Sistem Informasi SSJ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Inter', sans-serif; } </style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: 600; }
+    </style>
 </head>
 <body class="bg-gray-100">
 
@@ -21,476 +22,270 @@
 
         <!-- Main Content -->
         <main class="flex-1 p-6 sm:p-10 overflow-y-auto">
-            <header class="flex justify-between items-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-800">Tabungan</h1>
-                <button id="add-transaksi-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                    Tambah Transaksi
-                </button>
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
             </header>
 
-            <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <p class="text-sm font-medium text-gray-500">Total Uang Tersedia</p>
-                    <p id="total-tersedia" class="text-3xl font-bold text-green-600 mt-1">Memuat...</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-md flex items-center justify-between">
+                    <div><p class="text-sm font-medium text-gray-500">Jumlah Uang Kas</p><p id="total-kas" class="text-2xl font-bold text-gray-800">Memuat...</p></div>
+                    <div class="bg-blue-100 p-3 rounded-full"><svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <p class="text-sm font-medium text-gray-500">Total Uang Ditarik</p>
-                    <p id="total-ditarik" class="text-3xl font-bold text-red-600 mt-1">Memuat...</p>
+                <div class="bg-white p-6 rounded-lg shadow-md flex items-center justify-between">
+                    <div><p class="text-sm font-medium text-gray-500">Jumlah Uang Tabungan</p><p id="total-tabungan" class="text-2xl font-bold text-gray-800">Memuat...</p></div>
+                    <div class="bg-green-100 p-3 rounded-full"><svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg></div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md flex items-center justify-between">
+                    <div><p class="text-sm font-medium text-gray-500">Jumlah Siswa</p><p id="total-siswa" class="text-2xl font-bold text-gray-800">Memuat...</p></div>
+                    <div class="bg-yellow-100 p-3 rounded-full"><svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.125-1.274-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.125-1.274.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md flex items-center justify-between">
+                    <div><p class="text-sm font-medium text-gray-500">Jumlah Piala</p><p id="total-piala" class="text-2xl font-bold text-gray-800">Memuat...</p></div>
+                    <div class="bg-red-100 p-3 rounded-full"><svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-12v16a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V17z"></path></svg></div>
                 </div>
             </div>
 
-            <!-- Controls and Data Display -->
-            <div class="bg-white shadow-md rounded-lg p-6">
-                <!-- Filter Controls -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 pb-6 border-b">
-                    <div>
-                        <label for="filter-siswa" class="text-sm font-medium text-gray-700">Siswa</label>
-                        <select id="filter-siswa" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
-                            <option value="semua">Semua Siswa</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="filter-jenis" class="text-sm font-medium text-gray-700">Jenis Transaksi</label>
-                        <select id="filter-jenis" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
-                            <option value="semua">Semua Jenis</option>
-                            <option value="Setoran">Setoran</option>
-                            <option value="Penarikan">Penarikan</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="filter-dari-tanggal" class="text-sm font-medium text-gray-700">Dari Tanggal</label>
-                        <input type="date" id="filter-dari-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
-                    <div>
-                        <label for="filter-ke-tanggal" class="text-sm font-medium text-gray-700">Ke Tanggal</label>
-                        <input type="date" id="filter-ke-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
-                    </div>
-                    <div class="flex items-end">
-                        <div class="flex space-x-2 w-full">
-                            <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="7">7H</button>
-                            <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="30">1B</button>
-                            <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="365">1T</button>
+            <div class="bg-white p-6 rounded-lg shadow-md mt-8">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-6" id="tab-buttons">
+                        <button class="py-4 px-1 border-b-2 font-medium text-sm tab-active" data-tab="uang-kas">Uang Kas</button>
+                        <button class="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" data-tab="uang-tabungan">Uang Tabungan</button>
+                        <button class="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" data-tab="siswa">Siswa</button>
+                    </nav>
+                </div>
+                <div id="tab-contents" class="mt-6">
+                    <div id="uang-kas" class="tab-content">
+                        <div class="flex justify-end items-center mb-4">
+                            <label class="text-sm font-medium text-gray-700 mr-2">Rentang Tanggal:</label>
+                            <input type="date" id="kas-startdate" class="p-2 border border-gray-300 rounded-md text-sm">
+                            <span class="mx-2 text-gray-500">-</span>
+                            <input type="date" id="kas-enddate" class="p-2 border border-gray-300 rounded-md text-sm">
+                        </div>
+                        <div class="h-80 w-full relative">
+                            <canvas id="kasChart"></canvas>
+                            <div id="kas-blank-state" class="absolute inset-0 flex items-center justify-center h-full bg-gray-50 rounded-md hidden"><p class="text-gray-500">Belum ada data</p></div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex space-x-1 bg-gray-200 p-1 rounded-md">
-                        <button id="view-chart-btn" class="view-btn bg-white text-blue-600 px-3 py-1 rounded-md text-sm font-medium">Chart</button>
-                        <button id="view-table-btn" class="view-btn px-3 py-1 rounded-md text-sm text-gray-600">Tabel</button>
+                    <div id="uang-tabungan" class="tab-content hidden">
+                        <div class="flex justify-end items-center mb-4">
+                             <label class="text-sm font-medium text-gray-700 mr-2">Rentang Tanggal:</label>
+                             <input type="date" id="tabungan-startdate" class="p-2 border border-gray-300 rounded-md text-sm">
+                             <span class="mx-2 text-gray-500">-</span>
+                             <input type="date" id="tabungan-enddate" class="p-2 border border-gray-300 rounded-md text-sm">
+                        </div>
+                        <div class="h-80 w-full relative">
+                             <canvas id="tabunganChart"></canvas>
+                             <div id="tabungan-blank-state" class="absolute inset-0 flex items-center justify-center h-full bg-gray-50 rounded-md hidden"><p class="text-gray-500">Belum ada data</p></div>
+                        </div>
                     </div>
-                    <div class="flex space-x-2">
-                        <button id="export-pdf-btn" class="text-sm py-2 px-3 rounded bg-red-500 text-white hover:bg-red-600">Export PDF</button>
-                        <button id="export-excel-btn" class="text-sm py-2 px-3 rounded bg-green-500 text-white hover:bg-green-600">Export Excel</button>
+                    <div id="siswa" class="tab-content hidden">
+                        <div id="siswa-list-container" class="overflow-x-auto">
+                            <table class="min-w-full bg-white">
+                                <thead class="bg-gray-50"><tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><th class="px-6 py-3">Nama</th><th class="px-6 py-3">Kelas</th><th class="px-6 py-3">Status</th></tr></thead>
+                                <tbody id="siswa-list-body" class="bg-white divide-y divide-gray-200"></tbody>
+                            </table>
+                        </div>
+                        <div id="siswa-blank-state" class="flex items-center justify-center h-80 bg-gray-50 rounded-md hidden"><p class="text-gray-500">Belum ada data</p></div>
                     </div>
-                </div>
-
-                <div id="chart-container" class="h-96 w-full"> <canvas id="tabunganChart"></canvas> </div>
-                <div id="table-container" class="hidden overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Siswa</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jenis</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jumlah</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabungan-table-body" class="bg-white divide-y divide-gray-200"></tbody>
-                    </table>
-                </div>
-                 <div id="blank-state" class="text-center py-10 text-gray-500 hidden">
-                    Tidak ada data transaksi tabungan pada rentang yang dipilih.
                 </div>
             </div>
         </main>
     </div>
-
-    <!-- Modal Form -->
-    <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
-            <h3 id="modal-title" class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Tambah Transaksi</h3>
-            <form id="transaksi-form">
-                <input type="hidden" id="transaksi_tabungan_id">
-                <div class="space-y-4">
-                    <div>
-                        <label for="tanggal_transaksi" class="block text-sm font-medium text-gray-700">Tanggal</label>
-                        <input type="date" id="tanggal_transaksi" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                    </div>
-                    <div>
-                        <label for="nama_siswa_input" class="block text-sm font-medium text-gray-700">Nama Siswa</label>
-                        <input type="text" id="nama_siswa_input" list="siswa-list-form" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                        <datalist id="siswa-list-form"></datalist>
-                    </div>
-                    <div>
-                        <label for="jenis_transaksi" class="block text-sm font-medium text-gray-700">Jenis Transaksi</label>
-                        <select id="jenis_transaksi" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
-                            <option value="Setoran">Setoran</option>
-                            <option value="Penarikan">Penarikan</option>
-                        </select>
-                    </div>
-                    <div id="saldo-info-container" class="mt-2 text-sm text-gray-600 hidden">
-                        Saldo saat ini: <span id="saldo-display" class="font-bold">Memuat...</span>
-                    </div>
-                    <div>
-                        <label for="jumlah" class="block text-sm font-medium text-gray-700">Jumlah (Rp)</label>
-                        <input type="number" id="jumlah" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" id="cancel-form-btn" class="bg-white py-2 px-4 border border-gray-300 rounded-md">Batal</button>
-                    <button type="submit" id="save-form-btn" class="py-2 px-4 border border-transparent rounded-md text-white bg-blue-600">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+    
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyJoxa88pRoMdFmHqn2daMXNNBtsPdpFvR3Y5k3K1e_wWS17yRI8ijlU5GvRJ3MSttU/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyIWvGJ_kMe2ie_SHGd58Khhj_Cov932_dzGZeUTw-Hc5frcMlqPWD-sFAPnlnyBQom/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
-            let allTransactions = [];
-            let allSiswa = [];
-            let tabunganChartInstance;
-            let currentSiswaBalance = 0;
-
-            // --- ELEMEN DOM ---
-            const totalTersediaEl = document.getElementById('total-tersedia');
-            const totalDitarikEl = document.getElementById('total-ditarik');
-            const filterSiswaEl = document.getElementById('filter-siswa');
-            const filterJenisEl = document.getElementById('filter-jenis');
-            const filterDariEl = document.getElementById('filter-dari-tanggal');
-            const filterKeEl = document.getElementById('filter-ke-tanggal');
-            const viewChartBtn = document.getElementById('view-chart-btn');
-            const viewTableBtn = document.getElementById('view-table-btn');
-            const chartContainer = document.getElementById('chart-container');
-            const tableContainer = document.getElementById('table-container');
-            const blankState = document.getElementById('blank-state');
-            const tableBody = document.getElementById('tabungan-table-body');
-            const formModal = document.getElementById('form-modal');
-            const transaksiForm = document.getElementById('transaksi-form');
-            const modalTitle = document.getElementById('modal-title');
-            const addTransaksiBtn = document.getElementById('add-transaksi-btn');
-            const cancelFormBtn = document.getElementById('cancel-form-btn');
-            const jenisTransaksiEl = document.getElementById('jenis_transaksi');
-            const namaSiswaInputEl = document.getElementById('nama_siswa_input');
-            const saldoInfoContainer = document.getElementById('saldo-info-container');
-            const saldoDisplay = document.getElementById('saldo-display');
+            let fullData = {};
+            let kasChartInstance, tabunganChartInstance;
 
             async function fetchData() {
                 try {
                     const response = await fetch(WEB_APP_URL, {
-                        method: 'POST', redirect: 'follow',
-                        body: JSON.stringify({ action: 'getTabunganPageData' }),
+                        method: 'POST',
+                        redirect: 'follow',
+                        body: JSON.stringify({ action: 'getDashboardData' }),
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                     });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
                     const data = await response.json();
+                    console.log("Data diterima dari server:", data); // DEBUGGING
                     if (data.status !== 'success') throw new Error(data.message);
-                    
-                    allTransactions = data.transactions;
-                    allSiswa = data.siswa;
-                    
-                    populateSiswaFilters();
-                    updateView();
+
+                    fullData = data;
+                    updateUI(data);
+
                 } catch (error) {
-                    console.error("Fetch error:", error);
-                    totalTersediaEl.textContent = "Error";
-                    totalDitarikEl.textContent = "Error";
+                    console.error('Gagal mengambil data:', error);
+                    showError(error.message);
                 }
             }
 
-            function updateView() {
-                const filtered = getFilteredData();
-                updateSummary(filtered);
-                renderChart(filtered);
-                renderTable(filtered);
-                blankState.classList.toggle('hidden', filtered.length > 0);
-            }
-
-            function getFilteredData() {
-                const selectedSiswa = filterSiswaEl.value;
-                const selectedJenis = filterJenisEl.value;
-                const fromDate = filterDariEl.value ? new Date(filterDariEl.value) : null;
-                const toDate = filterKeEl.value ? new Date(filterKeEl.value) : null;
-                if(fromDate) fromDate.setHours(0,0,0,0);
-                if(toDate) toDate.setHours(23,59,59,999);
-
-                return allTransactions.filter(t => {
-                    const tDate = new Date(t.tanggal);
-                    const siswaMatch = selectedSiswa === 'semua' || t.siswa_id === selectedSiswa;
-                    const jenisMatch = selectedJenis === 'semua' || t.jenis_transaksi === selectedJenis;
-                    const fromDateMatch = !fromDate || tDate >= fromDate;
-                    const toDateMatch = !toDate || tDate <= toDate;
-                    return siswaMatch && jenisMatch && fromDateMatch && toDateMatch;
-                });
-            }
-
-            function updateSummary(data) {
-                const totalSetoran = data.filter(t => t.jenis_transaksi === 'Setoran').reduce((sum, t) => sum + Number(t.jumlah), 0);
-                const totalPenarikan = data.filter(t => t.jenis_transaksi === 'Penarikan').reduce((sum, t) => sum + Number(t.jumlah), 0);
-                const formatCurrency = (val) => `Rp ${new Intl.NumberFormat('id-ID').format(val)}`;
-                totalTersediaEl.textContent = formatCurrency(totalSetoran - totalPenarikan);
-                totalDitarikEl.textContent = formatCurrency(totalPenarikan);
-            }
-
-            function populateSiswaFilters() {
-                const formSiswaList = document.getElementById('siswa-list-form');
-                filterSiswaEl.innerHTML = '<option value="semua">Semua Siswa</option>';
-                formSiswaList.innerHTML = '';
-
-                allSiswa.forEach(siswa => {
-                    const option = document.createElement('option');
-                    option.value = siswa.siswa_id;
-                    option.textContent = siswa.nama_siswa;
-                    filterSiswaEl.appendChild(option.cloneNode(true));
-                    const dataListOption = document.createElement('option');
-                    dataListOption.value = siswa.nama_siswa;
-                    dataListOption.dataset.id = siswa.siswa_id;
-                    formSiswaList.appendChild(dataListOption);
-                });
-            }
-
-            function renderChart(data) {
-                const canvas = document.getElementById('tabunganChart');
-                if (tabunganChartInstance) tabunganChartInstance.destroy();
-                tabunganChartInstance = new Chart(canvas.getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: data.map(d => new Date(d.tanggal).toLocaleDateString('id-ID')),
-                        datasets: [
-                            { label: 'Setoran', data: data.map(d => d.jenis_transaksi === 'Setoran' ? d.jumlah : null), borderColor: 'rgb(16, 185, 129)', backgroundColor: 'rgba(16, 185, 129, 0.2)', fill: true },
-                            { label: 'Penarikan', data: data.map(d => d.jenis_transaksi === 'Penarikan' ? d.jumlah : null), borderColor: 'rgb(239, 68, 68)', backgroundColor: 'rgba(239, 68, 68, 0.2)', fill: true }
-                        ]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-            }
-
-            function renderTable(data) {
-                tableBody.innerHTML = '';
-                const sortedData = data.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
-
-                sortedData.forEach(t => {
-                    const siswa = allSiswa.find(s => s.siswa_id === t.siswa_id);
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${siswa ? siswa.nama_siswa : 'N/A'}</td>
-                        <td class="px-6 py-4 text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${t.jenis_transaksi === 'Setoran' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${t.jenis_transaksi}</span></td>
-                        <td class="px-6 py-4 text-sm text-gray-500">Rp ${new Intl.NumberFormat('id-ID').format(t.jumlah)}</td>
-                        <td class="px-6 py-4 text-right text-sm font-medium">
-                            <button class="text-indigo-600 hover:text-indigo-900" onclick="window.editTransaksi('${t.transaksi_tabungan_id}')">Edit</button>
-                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="window.deleteTransaksi('${t.transaksi_tabungan_id}')">Hapus</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            }
-
-            async function checkAndDisplayBalance() {
-                const selectedSiswaName = namaSiswaInputEl.value;
-                const selectedOption = document.querySelector(`#siswa-list-form option[value='${selectedSiswaName}']`);
-                const isPenarikan = jenisTransaksiEl.value === 'Penarikan';
-
-                if (isPenarikan && selectedOption) {
-                    saldoInfoContainer.classList.remove('hidden');
-                    saldoDisplay.textContent = 'Memuat...';
-                    try {
-                        const response = await fetch(WEB_APP_URL, {
-                            method: 'POST', redirect: 'follow',
-                            body: JSON.stringify({ action: 'getSiswaBalance', siswa_id: selectedOption.dataset.id }),
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-                        });
-                        const result = await response.json();
-                        if (result.status === 'success') {
-                            currentSiswaBalance = result.balance;
-                            saldoDisplay.textContent = `Rp ${new Intl.NumberFormat('id-ID').format(result.balance)}`;
-                        } else {
-                            saldoDisplay.textContent = 'Gagal memuat';
-                        }
-                    } catch (error) {
-                        saldoDisplay.textContent = 'Error';
-                    }
-                } else {
-                    saldoInfoContainer.classList.add('hidden');
-                }
-            }
-            
-            transaksiForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const saveBtn = document.getElementById('save-form-btn');
-                saveBtn.disabled = true;
-                saveBtn.textContent = 'Menyimpan...';
-
-                const selectedSiswaName = document.getElementById('nama_siswa_input').value;
-                const selectedOption = document.querySelector(`#siswa-list-form option[value='${selectedSiswaName}']`);
-                if (!selectedOption) {
-                    alert('Pilih siswa dari daftar.');
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = 'Simpan';
-                    return;
-                }
-                
-                const isPenarikan = jenisTransaksiEl.value === 'Penarikan';
-                const jumlahTransaksi = Number(document.getElementById('jumlah').value);
-
-                if (isPenarikan && jumlahTransaksi > currentSiswaBalance) {
-                    alert(`Penarikan gagal. Jumlah melebihi saldo yang tersedia (Rp ${new Intl.NumberFormat('id-ID').format(currentSiswaBalance)}).`);
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = 'Simpan';
-                    return;
-                }
-                
-                const id = document.getElementById('transaksi_tabungan_id').value;
-                const isUpdate = !!id;
-
-                const formData = {
-                    action: isUpdate ? 'updateRow' : 'addTransaksi',
-                    sheetName: 'Tabungan',
-                    id: id,
-                    idColumnName: 'transaksi_tabungan_id',
-                    data: {
-                        tanggal: document.getElementById('tanggal_transaksi').value,
-                        siswa_id: selectedOption.dataset.id,
-                        jenis_transaksi: document.getElementById('jenis_transaksi').value,
-                        jumlah: jumlahTransaksi,
-                    }
-                };
-                if(isUpdate) {
-                    formData.data.transaksi_tabungan_id = id;
-                } else {
-                    delete formData.data.transaksi_tabungan_id;
-                }
-
+            function updateUI(data) {
                 try {
-                    const response = await fetch(WEB_APP_URL, {
-                        method: 'POST', redirect: 'follow',
-                        body: JSON.stringify(formData),
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-                    });
-                    const result = await response.json();
-                    alert(result.message);
-                    if (result.status === 'success') {
-                        formModal.classList.add('hidden');
-                        fetchData();
-                    }
+                    updateInfoCards(data.summary);
+                    initializeTabs();
+                    renderKasChart(data.kas || []);
+                    renderTabunganChart(data.tabungan || []);
+                    renderSiswaList(data.siswa || []);
                 } catch (error) {
-                    alert('Gagal menyimpan: ' + error.message);
-                } finally {
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = 'Simpan';
+                    console.error("Error saat update UI:", error);
+                    showError("Gagal menampilkan data di halaman.");
                 }
-            });
+            }
 
-            window.editTransaksi = (id) => {
-                const t = allTransactions.find(tr => tr.transaksi_tabungan_id === id);
-                const siswa = allSiswa.find(s => s.siswa_id === t.siswa_id);
-                if (!t || !siswa) return;
-                
-                modalTitle.textContent = 'Edit Transaksi';
-                document.getElementById('transaksi_tabungan_id').value = t.transaksi_tabungan_id;
-                document.getElementById('tanggal_transaksi').value = new Date(t.tanggal).toISOString().split('T')[0];
-                document.getElementById('nama_siswa_input').value = siswa.nama_siswa;
-                document.getElementById('jenis_transaksi').value = t.jenis_transaksi;
-                document.getElementById('jumlah').value = t.jumlah;
-                formModal.classList.remove('hidden');
-                checkAndDisplayBalance();
-            };
+            function updateInfoCards(summary) {
+                const formatCurrency = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
+                document.getElementById('total-kas').textContent = formatCurrency(summary.totalKas);
+                document.getElementById('total-tabungan').textContent = formatCurrency(summary.totalTabungan);
+                document.getElementById('total-siswa').textContent = summary.totalSiswa || 0;
+                document.getElementById('total-piala').textContent = summary.totalPiala || 0;
+            }
 
-            window.deleteTransaksi = async (id) => {
-                if (confirm('Yakin ingin menghapus transaksi ini?')) {
-                    try {
-                        const response = await fetch(WEB_APP_URL, {
-                            method: 'POST', redirect: 'follow',
-                            body: JSON.stringify({ action: 'deleteRow', sheetName: 'Tabungan', id: id, idColumnName: 'transaksi_tabungan_id' }),
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            function initializeTabs() {
+                const tabButtons = document.querySelectorAll('#tab-buttons button');
+                const tabContents = document.querySelectorAll('#tab-contents .tab-content');
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        tabButtons.forEach(btn => {
+                            btn.classList.remove('tab-active');
+                            btn.classList.add('text-gray-500', 'border-transparent');
                         });
-                        const result = await response.json();
-                        alert(result.message);
-                        if (result.status === 'success') fetchData();
-                    } catch(error) { alert('Gagal menghapus: ' + error.message); }
+                        tabContents.forEach(content => content.classList.add('hidden'));
+                        
+                        button.classList.add('tab-active');
+                        button.classList.remove('text-gray-500', 'border-transparent');
+                        document.getElementById(button.dataset.tab).classList.remove('hidden');
+                    });
+                });
+            }
+
+            function renderKasChart(kasData) {
+                try {
+                    const startDate = document.getElementById('kas-startdate').value;
+                    const endDate = document.getElementById('kas-enddate').value;
+                    
+                    const filteredData = kasData.filter(item => {
+                        if (!item.tanggal || typeof item.tanggal !== 'string') return false;
+                        const itemDate = new Date(item.tanggal);
+                        if (isNaN(itemDate.getTime())) return false; // Cek tanggal valid
+                        const start = startDate ? new Date(startDate) : null;
+                        const end = endDate ? new Date(endDate) : null;
+                        if (start && itemDate < start) return false;
+                        if (end && itemDate > end) return false;
+                        return true;
+                    });
+
+                    const canvas = document.getElementById('kasChart');
+                    const blankState = document.getElementById('kas-blank-state');
+                    if (kasChartInstance) kasChartInstance.destroy();
+
+                    if (filteredData.length === 0) {
+                        canvas.style.display = 'none';
+                        blankState.classList.remove('hidden');
+                        return;
+                    }
+                    canvas.style.display = 'block';
+                    blankState.classList.add('hidden');
+
+                    kasChartInstance = new Chart(canvas.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: filteredData.map(d => new Date(d.tanggal).toLocaleDateString('id-ID')),
+                            datasets: [{
+                                label: 'Uang Kas',
+                                data: filteredData.map(d => d.jumlah),
+                                borderColor: 'rgb(59, 130, 246)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                                tension: 0.1, fill: true
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                    });
+                } catch (error) {
+                    console.error("Error rendering Kas Chart:", error);
                 }
-            };
+            }
 
-            // --- EVENT LISTENERS ---
-            document.querySelectorAll('#filter-siswa, #filter-jenis, #filter-dari-tanggal, #filter-ke-tanggal').forEach(el => el.addEventListener('change', updateView));
-            document.querySelectorAll('.preset-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const range = parseInt(this.dataset.range);
-                    const toDate = new Date();
-                    const fromDate = new Date();
-                    fromDate.setDate(toDate.getDate() - range);
-                    filterKeEl.valueAsDate = toDate;
-                    filterDariEl.valueAsDate = fromDate;
-                    updateView();
+            function renderTabunganChart(tabunganData) {
+                try {
+                    const startDate = document.getElementById('tabungan-startdate').value;
+                    const endDate = document.getElementById('tabungan-enddate').value;
+
+                    const filteredData = tabunganData.filter(item => {
+                        if (!item.tanggal || typeof item.tanggal !== 'string') return false;
+                        const itemDate = new Date(item.tanggal);
+                        if (isNaN(itemDate.getTime())) return false;
+                        const start = startDate ? new Date(startDate) : null;
+                        const end = endDate ? new Date(endDate) : null;
+                        if (start && itemDate < start) return false;
+                        if (end && itemDate > end) return false;
+                        return true;
+                    });
+
+                    const canvas = document.getElementById('tabunganChart');
+                    const blankState = document.getElementById('tabungan-blank-state');
+                    if (tabunganChartInstance) tabunganChartInstance.destroy();
+
+                    if (filteredData.length === 0) {
+                        canvas.style.display = 'none';
+                        blankState.classList.remove('hidden');
+                        return;
+                    }
+                    canvas.style.display = 'block';
+                    blankState.classList.add('hidden');
+
+                    tabunganChartInstance = new Chart(canvas.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: filteredData.map(d => new Date(d.tanggal).toLocaleDateString('id-ID')),
+                            datasets: [{
+                                label: 'Uang Tabungan',
+                                data: filteredData.map(d => d.jumlah),
+                                borderColor: 'rgb(16, 185, 129)',
+                                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                                tension: 0.1, fill: true
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                    });
+                } catch (error) {
+                    console.error("Error rendering Tabungan Chart:", error);
+                }
+            }
+
+            function renderSiswaList(siswaData) {
+                const listBody = document.getElementById('siswa-list-body');
+                const listContainer = document.getElementById('siswa-list-container');
+                const blankState = document.getElementById('siswa-blank-state');
+                listBody.innerHTML = '';
+                if (!siswaData || siswaData.length === 0) {
+                    listContainer.classList.add('hidden');
+                    blankState.classList.remove('hidden');
+                    return;
+                }
+                listContainer.classList.remove('hidden');
+                blankState.classList.add('hidden');
+                siswaData.forEach(siswa => {
+                    const row = `<tr><td class="px-6 py-4 text-sm font-medium text-gray-900">${siswa.nama_siswa || ''}</td><td class="px-6 py-4 text-sm text-gray-500">${siswa.kelas || '-'}</td><td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">${siswa.status || 'Aktif'}</span></td></tr>`;
+                    listBody.innerHTML += row;
                 });
-            });
+            }
 
-            viewChartBtn.addEventListener('click', () => {
-                chartContainer.classList.remove('hidden');
-                tableContainer.classList.add('hidden');
-                viewChartBtn.classList.add('bg-white', 'text-blue-600');
-                viewTableBtn.classList.remove('bg-white', 'text-blue-600');
-            });
-            viewTableBtn.addEventListener('click', () => {
-                chartContainer.classList.add('hidden');
-                tableContainer.classList.remove('hidden');
-                viewTableBtn.classList.add('bg-white', 'text-blue-600');
-                viewChartBtn.classList.remove('bg-white', 'text-blue-600');
-            });
-
-            addTransaksiBtn.addEventListener('click', () => {
-                transaksiForm.reset();
-                document.getElementById('transaksi_tabungan_id').value = '';
-                modalTitle.textContent = 'Tambah Transaksi';
-                document.getElementById('tanggal_transaksi').value = new Date().toISOString().split('T')[0];
-                formModal.classList.remove('hidden');
-                checkAndDisplayBalance();
-            });
-            cancelFormBtn.addEventListener('click', () => formModal.classList.add('hidden'));
+            function showError(message) {
+                ['total-kas', 'total-tabungan', 'total-siswa', 'total-piala'].forEach(id => {
+                    document.getElementById(id).textContent = 'Error';
+                });
+                alert("Terjadi kesalahan: " + message);
+            }
             
-            jenisTransaksiEl.addEventListener('change', checkAndDisplayBalance);
-            namaSiswaInputEl.addEventListener('input', checkAndDisplayBalance);
-
-            // --- EXPORT LOGIC ---
-            document.getElementById('export-pdf-btn').addEventListener('click', () => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                const data = getFilteredData().sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)).map(t => {
-                    const siswa = allSiswa.find(s => s.siswa_id === t.siswa_id);
-                    return [
-                        new Date(t.tanggal).toLocaleDateString('id-ID'),
-                        siswa ? siswa.nama_siswa : 'N/A',
-                        t.jenis_transaksi,
-                        `Rp ${new Intl.NumberFormat('id-ID').format(t.jumlah)}`
-                    ];
-                });
-                doc.text("Laporan Tabungan", 14, 16);
-                doc.autoTable({
-                    head: [['Tanggal', 'Nama Siswa', 'Jenis', 'Jumlah']],
-                    body: data,
-                    startY: 20
-                });
-                doc.save('laporan-tabungan.pdf');
-            });
-            document.getElementById('export-excel-btn').addEventListener('click', () => {
-                let csvContent = "data:text/csv;charset=utf-8,Tanggal,Nama Siswa,Jenis,Jumlah\n";
-                getFilteredData().sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)).forEach(t => {
-                    const siswa = allSiswa.find(s => s.siswa_id === t.siswa_id);
-                    csvContent += `${new Date(t.tanggal).toLocaleDateString('id-ID')},"${siswa ? siswa.nama_siswa : 'N/A'}",${t.jenis_transaksi},${t.jumlah}\n`;
-                });
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", "laporan-tabungan.csv");
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            });
+            document.getElementById('kas-startdate').addEventListener('change', () => renderKasChart(fullData.kas || []));
+            document.getElementById('kas-enddate').addEventListener('change', () => renderKasChart(fullData.kas || []));
+            document.getElementById('tabungan-startdate').addEventListener('change', () => renderTabunganChart(fullData.tabungan || []));
+            document.getElementById('tabungan-enddate').addEventListener('change', () => renderTabunganChart(fullData.tabungan || []));
 
             fetchData();
         });
