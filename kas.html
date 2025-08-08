@@ -92,9 +92,7 @@
                     <button id="export-excel-btn" class="text-sm py-2 px-3 rounded bg-green-500 text-white hover:bg-green-600">Export Excel</button>
                 </div>
 
-                <!-- Two Column Layout for Data -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Left Column: Table -->
                     <div class="lg:col-span-2">
                         <div id="table-container" class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
@@ -111,7 +109,6 @@
                             </table>
                         </div>
                     </div>
-                    <!-- Right Column: Chart -->
                     <div class="lg:col-span-1">
                         <div id="chart-container" class="h-96 w-full">
                             <canvas id="kasChart"></canvas>
@@ -174,101 +171,135 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywZvxjwx6ua_-GOsnAnwqwoRVAsQnvXOmWQrVlxl08J4tOlfuq04rDGbqIrwNIb0zB/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxy0kxQEghe7NnkN3VhDdZuRZbywmSfriaefgXyOYAJpC9quhauh9gPkGsdA662ZZdM/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
-            // --- Logika Halaman Kas ---
-            
-            // Placeholder untuk data
             let allTransactions = [];
             let allSiswa = [];
             let kasChartInstance;
 
-            async function fetchData() {
-                console.log("Fetching data for Kas page...");
-                // Nanti akan memanggil:
-                // const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getKasPageData' }) });
-                // const data = await response.json();
-                // allTransactions = data.transactions;
-                // allSiswa = data.siswa;
-                
-                // Data contoh untuk pengembangan
-                allSiswa = [
-                    { siswa_id: 'siswa-001', nama_siswa: 'Budi Santoso' },
-                    { siswa_id: 'siswa-002', nama_siswa: 'Citra Lestari' }
-                ];
-                allTransactions = [
-                    { transaksi_kas_id: 'k-001', tanggal: '2025-08-01', keterangan: 'Iuran Kas Budi', jenis_transaksi: 'Pemasukan', sumber_pemasukan: 'Iuran Siswa', siswa_id: 'siswa-001', jumlah: 25000 },
-                    { transaksi_kas_id: 'k-002', tanggal: '2025-08-02', keterangan: 'Beli Air Minum', jenis_transaksi: 'Pengeluaran', sumber_pemasukan: '', siswa_id: '', jumlah: 15000 },
-                    { transaksi_kas_id: 'k-003', tanggal: '2025-08-03', keterangan: 'Iuran Kas Citra', jenis_transaksi: 'Pemasukan', sumber_pemasukan: 'Iuran Siswa', siswa_id: 'siswa-002', jumlah: 25000 },
-                    { transaksi_kas_id: 'k-004', tanggal: '2025-08-04', keterangan: 'Donasi Alumni', jenis_transaksi: 'Pemasukan', sumber_pemasukan: 'Lainnya', siswa_id: '', jumlah: 100000 },
-                ];
-
-                updateDashboard();
-                populateSiswaFilters();
-            }
-
-            function updateDashboard() {
-                console.log("Updating dashboard...");
-                const totalPemasukan = allTransactions.filter(t => t.jenis_transaksi === 'Pemasukan').reduce((sum, t) => sum + t.jumlah, 0);
-                const totalPengeluaran = allTransactions.filter(t => t.jenis_transaksi === 'Pengeluaran').reduce((sum, t) => sum + t.jumlah, 0);
-                
-                document.getElementById('total-tersedia').textContent = `Rp ${new Intl.NumberFormat('id-ID').format(totalPemasukan - totalPengeluaran)}`;
-                document.getElementById('total-pemasukan').textContent = `Rp ${new Intl.NumberFormat('id-ID').format(totalPemasukan)}`;
-                document.getElementById('total-pengeluaran').textContent = `Rp ${new Intl.NumberFormat('id-ID').format(totalPengeluaran)}`;
-                
-                // Panggil render chart dan table
-                renderChart(allTransactions);
-                renderTable(allTransactions);
-            }
+            // --- ELEMEN DOM ---
+            const totalTersediaEl = document.getElementById('total-tersedia');
+            const totalPemasukanEl = document.getElementById('total-pemasukan');
+            const totalPengeluaranEl = document.getElementById('total-pengeluaran');
+            const tableBody = document.getElementById('kas-table-body');
+            const blankState = document.getElementById('blank-state');
+            const formModal = document.getElementById('form-modal');
+            const transaksiForm = document.getElementById('transaksi-form');
+            const modalTitle = document.getElementById('modal-title');
             
+            // --- FUNGSI UTAMA ---
+            async function fetchData() {
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST', redirect: 'follow',
+                        body: JSON.stringify({ action: 'getKasPageData' }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const data = await response.json();
+                    if (data.status !== 'success') throw new Error(data.message);
+                    
+                    allTransactions = data.transactions;
+                    allSiswa = data.siswa;
+                    
+                    populateSiswaFilters();
+                    updateView();
+                } catch (error) {
+                    console.error("Fetch error:", error);
+                    totalTersediaEl.textContent = "Error";
+                }
+            }
+
+            function updateView() {
+                const filtered = getFilteredData();
+                updateSummary(filtered);
+                renderChart(filtered);
+                renderTable(filtered);
+                blankState.classList.toggle('hidden', filtered.length > 0);
+            }
+
+            function getFilteredData() {
+                // ... (Logika filter lengkap)
+                return allTransactions; // Placeholder
+            }
+
+            // --- FUNGSI TAMPILAN ---
+            function updateSummary(data) {
+                const totalPemasukan = data.filter(t => t.jenis_transaksi === 'Pemasukan').reduce((sum, t) => sum + Number(t.jumlah), 0);
+                const totalPengeluaran = data.filter(t => t.jenis_transaksi === 'Pengeluaran').reduce((sum, t) => sum + Number(t.jumlah), 0);
+                const formatCurrency = (val) => `Rp ${new Intl.NumberFormat('id-ID').format(val)}`;
+                totalTersediaEl.textContent = formatCurrency(totalPemasukan - totalPengeluaran);
+                totalPemasukanEl.textContent = formatCurrency(totalPemasukan);
+                totalPengeluaranEl.textContent = formatCurrency(totalPengeluaran);
+            }
+
             function populateSiswaFilters() {
                 const filterSiswaList = document.getElementById('siswa-list-filter');
                 const formSiswaList = document.getElementById('siswa-list-form');
-                
+                filterSiswaList.innerHTML = '';
+                formSiswaList.innerHTML = '';
                 allSiswa.forEach(siswa => {
-                    const dataListOption = document.createElement('option');
-                    dataListOption.value = siswa.nama_siswa;
-                    dataListOption.dataset.id = siswa.siswa_id;
-                    
-                    filterSiswaList.appendChild(dataListOption.cloneNode(true));
-                    formSiswaList.appendChild(dataListOption.cloneNode(true));
+                    const option = document.createElement('option');
+                    option.value = siswa.nama_siswa;
+                    option.dataset.id = siswa.siswa_id;
+                    filterSiswaList.appendChild(option.cloneNode(true));
+                    formSiswaList.appendChild(option.cloneNode(true));
                 });
             }
 
-            function renderChart(data) { /* ... logika chart ... */ }
-            function renderTable(data) { /* ... logika tabel ... */ }
-            
-            // --- Event Listeners ---
-            document.getElementById('add-transaksi-btn').addEventListener('click', () => {
-                document.getElementById('form-modal').classList.remove('hidden');
-            });
-            document.getElementById('cancel-form-btn').addEventListener('click', () => {
-                document.getElementById('form-modal').classList.add('hidden');
-            });
-            
-            // Tampilkan/sembunyikan input siswa di form
-            document.getElementById('sumber_pemasukan').addEventListener('change', function() {
-                const siswaContainer = document.getElementById('form-siswa-container');
-                if (this.value === 'Iuran Siswa') {
-                    siswaContainer.classList.remove('hidden');
-                } else {
-                    siswaContainer.classList.add('hidden');
-                }
-            });
-            
-            // Tampilkan/sembunyikan filter siswa
-            document.getElementById('filter-sumber').addEventListener('change', function() {
-                 const siswaFilterContainer = document.getElementById('filter-siswa-container');
-                 if (this.value === 'Iuran Siswa') {
-                    siswaFilterContainer.classList.remove('hidden');
-                 } else {
-                    siswaFilterContainer.classList.add('hidden');
-                 }
-            });
+            function renderChart(data) {
+                const canvas = document.getElementById('kasChart');
+                if (kasChartInstance) kasChartInstance.destroy();
+                kasChartInstance = new Chart(canvas.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Pemasukan', 'Pengeluaran'],
+                        datasets: [{
+                            data: [
+                                data.filter(t => t.jenis_transaksi === 'Pemasukan').reduce((sum, t) => sum + Number(t.jumlah), 0),
+                                data.filter(t => t.jenis_transaksi === 'Pengeluaran').reduce((sum, t) => sum + Number(t.jumlah), 0)
+                            ],
+                            backgroundColor: ['rgb(16, 185, 129)', 'rgb(239, 68, 68)'],
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
 
-            // Panggil fungsi awal
+            function renderTable(data) {
+                tableBody.innerHTML = '';
+                const sortedData = data.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+                sortedData.forEach(t => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${t.keterangan}</td>
+                        <td class="px-6 py-4 text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${t.jenis_transaksi === 'Pemasukan' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${t.jenis_transaksi}</span></td>
+                        <td class="px-6 py-4 text-sm text-gray-500">Rp ${new Intl.NumberFormat('id-ID').format(t.jumlah)}</td>
+                        <td class="px-6 py-4 text-right text-sm font-medium">
+                            <button class="text-indigo-600 hover:text-indigo-900" onclick="window.editTransaksi('${t.transaksi_kas_id}')">Edit</button>
+                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="window.deleteTransaksi('${t.transaksi_kas_id}')">Hapus</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            // --- EVENT LISTENERS & FORM HANDLING ---
+            document.getElementById('add-transaksi-btn').addEventListener('click', () => {
+                transaksiForm.reset();
+                document.getElementById('transaksi_kas_id').value = '';
+                modalTitle.textContent = 'Tambah Transaksi Kas';
+                document.getElementById('tanggal_transaksi').value = new Date().toISOString().split('T')[0];
+                formModal.classList.remove('hidden');
+            });
+            document.getElementById('cancel-form-btn').addEventListener('click', () => formModal.classList.add('hidden'));
+
+            transaksiForm.addEventListener('submit', async function(e) { /* ... (Logika simpan) ... */ });
+            window.editTransaksi = (id) => { /* ... (Logika edit) ... */ };
+            window.deleteTransaksi = async (id) => { /* ... (Logika hapus) ... */ };
+
             fetchData();
         });
     </script>
