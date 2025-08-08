@@ -48,7 +48,7 @@
             <div class="bg-white shadow-md rounded-lg p-6">
                 <!-- Filter Controls -->
                 <div class="mb-6 pb-6 border-b">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                         <div>
                             <label for="filter-dari-tanggal" class="text-sm font-medium text-gray-700">Dari Tanggal</label>
                             <input type="date" id="filter-dari-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
@@ -57,12 +57,10 @@
                             <label for="filter-ke-tanggal" class="text-sm font-medium text-gray-700">Ke Tanggal</label>
                             <input type="date" id="filter-ke-tanggal" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
                         </div>
-                        <div class="flex items-end">
-                            <div class="flex space-x-2 w-full">
-                                <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="7">7H</button>
-                                <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="30">1B</button>
-                                <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="365">1T</button>
-                            </div>
+                        <div class="flex items-center space-x-2 pt-6">
+                            <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="7">7H</button>
+                            <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="30">1B</button>
+                            <button class="preset-btn w-1/3 text-xs py-2 px-2 rounded bg-gray-200 hover:bg-gray-300" data-range="365">1T</button>
                         </div>
                         <div>
                             <label for="filter-jenis" class="text-sm font-medium text-gray-700">Jenis Transaksi</label>
@@ -142,7 +140,7 @@
                             <option value="Pengeluaran">Pengeluaran</option>
                         </select>
                     </div>
-                    <div id="sumber-pemasukan-container">
+                    <div id="sumber-pemasukan-container" class="hidden">
                         <label for="sumber_pemasukan" class="block text-sm font-medium text-gray-700">Sumber Pemasukan</label>
                         <select id="sumber_pemasukan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
                             <option value="Iuran Siswa">Iuran Siswa</option>
@@ -156,7 +154,7 @@
                     </div>
                     <div>
                         <label for="keterangan" class="block text-sm font-medium text-gray-700">Keterangan</label>
-                        <input type="text" id="keterangan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
+                        <input type="text" id="keterangan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
                     </div>
                     <div>
                         <label for="jumlah" class="block text-sm font-medium text-gray-700">Jumlah (Rp)</label>
@@ -173,7 +171,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxy0kxQEghe7NnkN3VhDdZuRZbywmSfriaefgXyOYAJpC9quhauh9gPkGsdA662ZZdM/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxr2ICo_C96PDnyqOl4-joM2l6Dy8c-wkfZcSIfgZ88_sto-Mx7PUo3_0ISTtD5Omw/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
@@ -233,8 +231,8 @@
                 return allTransactions.filter(t => {
                     const tDate = new Date(t.tanggal);
                     const jenisMatch = filterJenis === 'semua' || t.jenis_transaksi === filterJenis;
-                    const sumberMatch = filterSumber === 'semua' || t.sumber_pemasukan === filterSumber;
-                    const siswaMatch = !filterSiswa || filterSiswa === 'semua' || t.siswa_id === filterSiswa;
+                    const sumberMatch = filterJenis !== 'Pemasukan' || filterSumber === 'semua' || t.sumber_pemasukan === filterSumber;
+                    const siswaMatch = filterSumber !== 'Iuran Siswa' || filterSiswa === 'semua' || t.siswa_id === filterSiswa;
                     const fromDateMatch = !fromDate || tDate >= fromDate;
                     const toDateMatch = !toDate || tDate <= toDate;
                     
@@ -314,7 +312,6 @@
             const sumberPemasukanEl = document.getElementById('sumber_pemasukan');
             const formSiswaContainer = document.getElementById('form-siswa-container');
             const siswaInput = document.getElementById('nama_siswa_input');
-            const keteranganInput = document.getElementById('keterangan');
 
             function toggleFormFields() {
                 const jenis = jenisTransaksiEl.value;
