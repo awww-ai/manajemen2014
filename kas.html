@@ -154,7 +154,7 @@
                     </div>
                     <div id="keterangan-container">
                         <label for="keterangan" class="block text-sm font-medium text-gray-700">Keterangan</label>
-                        <input type="text" id="keterangan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
+                        <input type="text" id="keterangan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
                     </div>
                     <div>
                         <label for="jumlah" class="block text-sm font-medium text-gray-700">Jumlah (Rp)</label>
@@ -216,7 +216,7 @@
                 updateSummary(filtered);
                 renderChart(filtered);
                 renderTable(filtered);
-                blankState.classList.toggle('hidden', filtered.length === 0);
+                blankState.classList.toggle('hidden', filtered.length > 0);
             }
 
             function getFilteredData() {
@@ -292,6 +292,8 @@
             const sumberPemasukanEl = document.getElementById('sumber_pemasukan');
             const formSiswaContainer = document.getElementById('form-siswa-container');
             const keteranganContainer = document.getElementById('keterangan-container');
+            const keteranganInput = document.getElementById('keterangan');
+            const siswaInput = document.getElementById('nama_siswa_input');
 
             function toggleFormFields() {
                 const jenis = jenisTransaksiEl.value;
@@ -302,14 +304,20 @@
                     if (sumber === 'Iuran Siswa') {
                         formSiswaContainer.classList.remove('hidden');
                         keteranganContainer.classList.add('hidden');
+                        siswaInput.required = true;
+                        keteranganInput.required = false;
                     } else { // Lainnya
                         formSiswaContainer.classList.add('hidden');
                         keteranganContainer.classList.remove('hidden');
+                        siswaInput.required = false;
+                        keteranganInput.required = true;
                     }
                 } else { // Pengeluaran
                     sumberPemasukanContainer.classList.add('hidden');
                     formSiswaContainer.classList.add('hidden');
                     keteranganContainer.classList.remove('hidden');
+                    siswaInput.required = false;
+                    keteranganInput.required = true;
                 }
             }
 
