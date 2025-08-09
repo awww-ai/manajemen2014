@@ -171,6 +171,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // <-- GANTI INI JIKA PERLU: pastiin ini udah endpoint Web App lo -->
             const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxr2ICo_C96PDnyqOl4-joM2l6Dy8c-wkfZcSIfgZ88_sto-Mx7PUo3_0ISTtD5Omw/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
@@ -200,8 +201,8 @@
                     const data = await response.json();
                     if (data.status !== 'success') throw new Error(data.message);
                     
-                    allTransactions = data.transactions;
-                    allSiswa = data.siswa;
+                    allTransactions = data.transactions || [];
+                    allSiswa = data.siswa || [];
                     
                     populateSiswaFilters();
                     updateView();
@@ -221,8 +222,8 @@
 
             function getFilteredData() {
                 const filterJenis = document.getElementById('filter-jenis').value;
-                const filterSumber = document.getElementById('filter-sumber').value;
-                const filterSiswa = document.getElementById('filter-siswa').value;
+                const filterSumber = document.getElementById('filter-sumber') ? document.getElementById('filter-sumber').value : 'semua';
+                const filterSiswa = document.getElementById('filter-siswa') ? document.getElementById('filter-siswa').value : 'semua';
                 const fromDate = document.getElementById('filter-dari-tanggal').value ? new Date(document.getElementById('filter-dari-tanggal').value) : null;
                 const toDate = document.getElementById('filter-ke-tanggal').value ? new Date(document.getElementById('filter-ke-tanggal').value) : null;
                 if(fromDate) fromDate.setHours(0,0,0,0);
@@ -232,7 +233,7 @@
                     const tDate = new Date(t.tanggal);
                     const jenisMatch = filterJenis === 'semua' || t.jenis_transaksi === filterJenis;
                     const sumberMatch = filterJenis !== 'Pemasukan' || filterSumber === 'semua' || t.sumber_pemasukan === filterSumber;
-                    const siswaMatch = filterSumber !== 'Iuran Siswa' || filterSiswa === 'semua' || t.siswa_id === filterSiswa;
+                    const siswaMatch = filterSumber !== 'Iuran Siswa' || filterSiswa === 'semua' || String(t.siswa_id) === String(filterSiswa);
                     const fromDateMatch = !fromDate || tDate >= fromDate;
                     const toDateMatch = !toDate || tDate <= toDate;
                     
@@ -242,8 +243,8 @@
 
             // --- FUNGSI TAMPILAN ---
             function updateSummary(data) {
-                const totalPemasukan = data.filter(t => t.jenis_transaksi === 'Pemasukan').reduce((sum, t) => sum + Number(t.jumlah), 0);
-                const totalPengeluaran = data.filter(t => t.jenis_transaksi === 'Pengeluaran').reduce((sum, t) => sum + Number(t.jumlah), 0);
+                const totalPemasukan = data.filter(t => t.jenis_transaksi === 'Pemasukan').reduce((sum, t) => sum + Number(t.jumlah || 0), 0);
+                const totalPengeluaran = data.filter(t => t.jenis_transaksi === 'Pengeluaran').reduce((sum, t) => sum + Number(t.jumlah || 0), 0);
                 const formatCurrency = (val) => `Rp ${new Intl.NumberFormat('id-ID').format(val)}`;
                 totalTersediaEl.textContent = formatCurrency(totalPemasukan - totalPengeluaran);
                 totalPemasukanEl.textContent = formatCurrency(totalPemasukan);
@@ -253,6 +254,7 @@
             function populateSiswaFilters() {
                 const filterSiswaSelect = document.getElementById('filter-siswa');
                 const formSiswaList = document.getElementById('siswa-list-form');
+                if (!filterSiswaSelect || !formSiswaList) return;
                 filterSiswaSelect.innerHTML = '<option value="semua">Semua Siswa</option>';
                 formSiswaList.innerHTML = '';
                 allSiswa.forEach(siswa => {
@@ -277,8 +279,8 @@
                         labels: ['Pemasukan', 'Pengeluaran'],
                         datasets: [{
                             data: [
-                                data.filter(t => t.jenis_transaksi === 'Pemasukan').reduce((sum, t) => sum + Number(t.jumlah), 0),
-                                data.filter(t => t.jenis_transaksi === 'Pengeluaran').reduce((sum, t) => sum + Number(t.jumlah), 0)
+                                data.filter(t => t.jenis_transaksi === 'Pemasukan').reduce((sum, t) => sum + Number(t.jumlah || 0), 0),
+                                data.filter(t => t.jenis_transaksi === 'Pengeluaran').reduce((sum, t) => sum + Number(t.jumlah || 0), 0)
                             ],
                             backgroundColor: ['rgb(16, 185, 129)', 'rgb(239, 68, 68)'],
                         }]
@@ -289,14 +291,14 @@
 
             function renderTable(data) {
                 tableBody.innerHTML = '';
-                const sortedData = data.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+                const sortedData = data.slice().sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
                 sortedData.forEach(t => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${t.keterangan}</td>
-                        <td class="px-6 py-4 text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${t.jenis_transaksi === 'Pemasukan' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${t.jenis_transaksi}</span></td>
-                        <td class="px-6 py-4 text-sm text-gray-500">Rp ${new Intl.NumberFormat('id-ID').format(t.jumlah)}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${t.tanggal ? new Date(t.tanggal).toLocaleDateString('id-ID') : ''}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${t.keterangan || ''}</td>
+                        <td class="px-6 py-4 text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${t.jenis_transaksi === 'Pemasukan' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${t.jenis_transaksi || ''}</span></td>
+                        <td class="px-6 py-4 text-sm text-gray-500">Rp ${new Intl.NumberFormat('id-ID').format(Number(t.jumlah || 0))}</td>
                         <td class="px-6 py-4 text-right text-sm font-medium">
                             <button class="text-indigo-600 hover:text-indigo-900" onclick="window.editTransaksi('${t.transaksi_kas_id}')">Edit</button>
                             <button class="text-red-600 hover:text-red-900 ml-4" onclick="window.deleteTransaksi('${t.transaksi_kas_id}')">Hapus</button>
@@ -315,7 +317,7 @@
 
             function toggleFormFields() {
                 const jenis = jenisTransaksiEl.value;
-                const sumber = sumberPemasukanEl.value;
+                const sumber = sumberPemasukanEl ? sumberPemasukanEl.value : '';
                 sumberPemasukanContainer.classList.toggle('hidden', jenis !== 'Pemasukan');
                 if (jenis === 'Pemasukan' && sumber === 'Iuran Siswa') {
                     formSiswaContainer.classList.remove('hidden');
@@ -325,7 +327,7 @@
             }
             
             jenisTransaksiEl.addEventListener('change', toggleFormFields);
-            sumberPemasukanEl.addEventListener('change', toggleFormFields);
+            if (sumberPemasukanEl) sumberPemasukanEl.addEventListener('change', toggleFormFields);
 
             // --- EVENT LISTENERS & FORM HANDLING ---
             document.getElementById('add-transaksi-btn').addEventListener('click', () => {
@@ -338,9 +340,152 @@
             });
             document.getElementById('cancel-form-btn').addEventListener('click', () => formModal.classList.add('hidden'));
 
-            transaksiForm.addEventListener('submit', async function(e) { /* ... (Logika simpan) ... */ });
-            window.editTransaksi = (id) => { /* ... (Logika edit) ... */ };
-            window.deleteTransaksi = async (id) => { /* ... (Logika hapus) ... */ };
+            // ----------------- SIMPAN / EDIT / HAPUS TRANSAKSI KAS -----------------
+            transaksiForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                // ambil value form
+                const transaksiId = document.getElementById('transaksi_kas_id').value;
+                const tanggal = document.getElementById('tanggal_transaksi').value;
+                const jenis = document.getElementById('jenis_transaksi').value;
+                const sumber = document.getElementById('sumber_pemasukan') ? document.getElementById('sumber_pemasukan').value : '';
+                const namaSiswa = document.getElementById('nama_siswa_input').value || '';
+                const keterangan = document.getElementById('keterangan').value || '';
+                const jumlah = document.getElementById('jumlah').value;
+
+                // cari siswa_id dari allSiswa kalau ada nama siswa
+                let siswa_id = '';
+                if (namaSiswa) {
+                    const found = allSiswa.find(s => String(s.nama_siswa).toLowerCase() === String(namaSiswa).toLowerCase());
+                    if (found) siswa_id = found.siswa_id;
+                }
+
+                // prepare data object sesuai header sheet lo
+                const dataObj = {
+                    transaksi_kas_id: transaksiId || undefined,
+                    tanggal: tanggal,
+                    jenis_transaksi: jenis,
+                    sumber_pemasukan: sumber,
+                    siswa_id: siswa_id,
+                    keterangan: keterangan,
+                    jumlah: jumlah
+                };
+
+                try {
+                    let payload, res, json;
+                    if (!transaksiId) {
+                        // Tambah baru
+                        payload = { action: 'addTransaksiKas', data: dataObj };
+                        res = await fetch(WEB_APP_URL, {
+                            method: 'POST',
+                            body: JSON.stringify(payload),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        });
+                        json = await res.json();
+                        if (json.status === 'success') {
+                            formModal.classList.add('hidden');
+                            transaksiForm.reset();
+                            fetchData();
+                        } else {
+                            alert('Gagal menyimpan: ' + (json.message || 'Unknown error'));
+                        }
+                    } else {
+                        // Update existing
+                        payload = {
+                            action: 'updateRow',
+                            sheetName: 'Kas',
+                            id: transaksiId,
+                            idColumnName: 'transaksi_kas_id',
+                            data: dataObj
+                        };
+                        res = await fetch(WEB_APP_URL, {
+                            method: 'POST',
+                            body: JSON.stringify(payload),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        });
+                        json = await res.json();
+                        if (json.status === 'success') {
+                            formModal.classList.add('hidden');
+                            transaksiForm.reset();
+                            fetchData();
+                        } else {
+                            alert('Gagal update: ' + (json.message || 'Unknown error'));
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error saat simpan transaksi:', err);
+                    alert('Terjadi kesalahan saat menyimpan data. Cek console.');
+                }
+            });
+
+            // global edit function yang dipanggil dari table row (onclick)
+            window.editTransaksi = (id) => {
+                const trx = allTransactions.find(t => String(t.transaksi_kas_id) === String(id));
+                if (!trx) return alert('Transaksi tidak ditemukan.');
+
+                document.getElementById('transaksi_kas_id').value = trx.transaksi_kas_id || '';
+                document.getElementById('tanggal_transaksi').value = trx.tanggal ? new Date(trx.tanggal).toISOString().split('T')[0] : '';
+                document.getElementById('jenis_transaksi').value = trx.jenis_transaksi || 'Pemasukan';
+                if (document.getElementById('sumber_pemasukan')) document.getElementById('sumber_pemasukan').value = trx.sumber_pemasukan || 'Iuran Siswa';
+                document.getElementById('keterangan').value = trx.keterangan || '';
+                document.getElementById('jumlah').value = trx.jumlah || '';
+
+                if (trx.siswa_id) {
+                    const s = allSiswa.find(x => String(x.siswa_id) === String(trx.siswa_id));
+                    if (s) document.getElementById('nama_siswa_input').value = s.nama_siswa;
+                    else document.getElementById('nama_siswa_input').value = '';
+                } else {
+                    document.getElementById('nama_siswa_input').value = '';
+                }
+
+                toggleFormFields();
+                modalTitle.textContent = 'Edit Transaksi Kas';
+                formModal.classList.remove('hidden');
+            };
+
+            // global delete function yang dipanggil dari table row (onclick)
+            window.deleteTransaksi = async (id) => {
+                if (!confirm('Yakin mau hapus transaksi ini?')) return;
+                try {
+                    const payload = {
+                        action: 'deleteRow',
+                        sheetName: 'Kas',
+                        id: id,
+                        idColumnName: 'transaksi_kas_id'
+                    };
+                    const res = await fetch(WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(payload),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const json = await res.json();
+                    if (json.status === 'success') {
+                        fetchData();
+                    } else {
+                        alert('Gagal hapus: ' + (json.message || 'Unknown error'));
+                    }
+                } catch (err) {
+                    console.error('Error hapus:', err);
+                    alert('Terjadi kesalahan saat menghapus data.');
+                }
+            };
+
+            // simple filter handlers & presets
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const days = Number(btn.dataset.range) || 7;
+                    const to = new Date();
+                    const from = new Date();
+                    from.setDate(to.getDate() - days + 1);
+                    document.getElementById('filter-dari-tanggal').value = from.toISOString().split('T')[0];
+                    document.getElementById('filter-ke-tanggal').value = to.toISOString().split('T')[0];
+                    updateView();
+                });
+            });
+
+            ['filter-dari-tanggal','filter-ke-tanggal','filter-jenis','filter-sumber','filter-siswa'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', updateView);
+            });
 
             fetchData();
         });
