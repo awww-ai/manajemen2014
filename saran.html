@@ -158,7 +158,11 @@
                 const toDate = document.getElementById('filter-ke-tanggal').value;
 
                 filteredSaran = allSaran.filter(item => {
-                    if (statusFilter !== 'Semua' && item.status !== statusFilter) return false;
+                    // --- PERBAIKAN DI SINI ---
+                    // Anggap item 'Aktif' jika statusnya kosong (untuk data lama)
+                    const itemStatus = item.status || 'Aktif'; 
+                    if (statusFilter !== 'Semua' && itemStatus !== statusFilter) return false;
+                    
                     const itemDate = new Date(item.tanggal_kirim);
                     if (fromDate && itemDate < new Date(fromDate)) return false;
                     if (toDate && itemDate > new Date(new Date(toDate).setHours(23, 59, 59))) return false;
@@ -181,7 +185,8 @@
 
                 sortedData.forEach(saran => {
                     const row = document.createElement('tr');
-                    const isArchived = saran.status === 'Diarsipkan';
+                    const itemStatus = saran.status || 'Aktif'; // Pastikan status selalu ada
+                    const isArchived = itemStatus === 'Diarsipkan';
                     row.className = `cursor-pointer hover:bg-gray-50 ${isArchived ? 'bg-gray-50' : ''}`;
                     row.onclick = () => window.viewDetail(saran.saran_id);
                     
