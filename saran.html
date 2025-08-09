@@ -119,11 +119,12 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzU_Xt19O0l4IJC4fJzK3wh-GyuBIaWjYV0uAjSLIVcM2HTPueFWGrcmjknH_0lLAP6/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxr2ICo_C96PDnyqOl4-joM2l6Dy8c-wkfZcSIfgZ88_sto-Mx7PUo3_0ISTtD5Omw/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
             let allSaran = [];
+            let filteredSaran = [];
 
             const table = document.getElementById('saran-table');
             const tableBody = document.getElementById('saran-table-body');
@@ -156,7 +157,7 @@
                 const fromDate = document.getElementById('filter-dari-tanggal').value;
                 const toDate = document.getElementById('filter-ke-tanggal').value;
 
-                let filteredData = allSaran.filter(item => {
+                filteredSaran = allSaran.filter(item => {
                     if (statusFilter !== 'Semua' && item.status !== statusFilter) return false;
                     const itemDate = new Date(item.tanggal_kirim);
                     if (fromDate && itemDate < new Date(fromDate)) return false;
@@ -164,7 +165,7 @@
                     return true;
                 });
 
-                renderTable(filteredData);
+                renderTable(filteredSaran);
             }
 
             function renderTable(saranList) {
@@ -218,7 +219,7 @@
                         saran_id: id,
                         pengirim: pengirim,
                         isi_saran: document.getElementById('isi_saran').value,
-                        status: 'Aktif' // Status selalu aktif saat dibuat/diedit
+                        status: 'Aktif'
                     }
                 };
                 if (!isUpdate) delete formData.data.saran_id;
@@ -323,6 +324,23 @@
                     document.getElementById('filter-dari-tanggal').valueAsDate = fromDate;
                     updateView();
                 });
+            });
+
+            document.getElementById('export-pdf-btn').addEventListener('click', () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const data = filteredSaran.map(s => [
+                    new Date(s.tanggal_kirim).toLocaleDateString('id-ID'),
+                    s.pengirim,
+                    s.isi_saran
+                ]);
+                doc.text("Laporan Saran & Kritik", 14, 16);
+                doc.autoTable({
+                    head: [['Tanggal', 'Pengirim', 'Isi Saran']],
+                    body: data,
+                    startY: 20
+                });
+                doc.save('laporan-saran-kritik.pdf');
             });
 
             const showLoading = () => tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
