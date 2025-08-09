@@ -1,197 +1,149 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Piala - Sistem Informasi SSJ</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Inter', sans-serif; } </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manajemen Piala</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
 <body class="bg-gray-100">
 
-    <div class="flex h-screen">
-        <!-- Sidebar Placeholder -->
-        <aside id="sidebar-placeholder" class="w-64 bg-white shadow-md flex flex-col"></aside>
+  <!-- Header -->
+  <div class="p-4 bg-white shadow">
+    <h1 class="text-xl font-bold">Manajemen Piala</h1>
+  </div>
 
-        <!-- Main Content -->
-        <main class="flex-1 p-6 sm:p-10 overflow-y-auto">
-            <header class="flex justify-between items-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-800">Data Piala</h1>
-                <button id="add-piala-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                    Tambah Data Piala
-                </button>
-            </header>
+  <!-- Tombol Tambah -->
+  <div class="p-4">
+    <button onclick="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded">Tambah Piala</button>
+  </div>
 
-            <!-- Data Table -->
-            <div class="bg-white shadow-md rounded-lg overflow-hidden">
-                <div class="overflow-x-auto">
-                    <!-- PERUBAHAN: Menambahkan ID pada tabel -->
-                    <table id="piala-table" class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Kejuaraan</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Peringkat</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal Didapat</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pemegang Piala</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="piala-table-body" class="bg-white divide-y divide-gray-200"></tbody>
-                    </table>
-                </div>
-                <!-- PERUBAHAN: Memindahkan blank state ke luar container tabel -->
-                 <div id="blank-state" class="text-center py-10 text-gray-500 hidden">
-                    Belum ada data piala yang ditambahkan.
-                </div>
-            </div>
-        </main>
-    </div>
+  <!-- Table -->
+  <div class="p-4">
+    <table class="min-w-full bg-white">
+      <thead>
+        <tr>
+          <th class="py-2">ID</th>
+          <th class="py-2">Nama Piala</th>
+          <th class="py-2">Nama Siswa</th>
+          <th class="py-2">Tanggal</th>
+          <th class="py-2">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="pialaTable"></tbody>
+    </table>
+  </div>
 
-    <!-- Modal Form -->
-    <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
-            <h3 id="modal-title" class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Tambah Data Piala</h3>
-            <form id="piala-form">
-                <input type="hidden" id="piala_id">
-                <div class="space-y-4">
-                    <div>
-                        <label for="nama_kejuaraan" class="block text-sm font-medium text-gray-700">Nama Kejuaraan</label>
-                        <input type="text" id="nama_kejuaraan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                    </div>
-                    <div>
-                        <label for="peringkat" class="block text-sm font-medium text-gray-700">Peringkat</label>
-                        <input type="text" id="peringkat" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                    </div>
-                    <div>
-                        <label for="tanggal_didapat" class="block text-sm font-medium text-gray-700">Tanggal Didapat</label>
-                        <input type="date" id="tanggal_didapat" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                    </div>
-                    <div>
-                        <label for="pemegang_piala" class="block text-sm font-medium text-gray-700">Pemegang Piala (Siswa)</label>
-                        <input type="text" id="pemegang_piala" list="siswa-list-form" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                        <datalist id="siswa-list-form"></datalist>
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" id="cancel-form-btn" class="bg-white py-2 px-4 border border-gray-300 rounded-md">Batal</button>
-                    <button type="submit" id="save-form-btn" class="py-2 px-4 border border-transparent rounded-md text-white bg-blue-600">Simpan</button>
-                </div>
-            </form>
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded p-6 w-full max-w-md">
+      <h2 id="modalTitle" class="text-lg font-bold mb-4">Tambah Piala</h2>
+      <form id="pialaForm" onsubmit="savePiala(event)">
+        <input type="hidden" id="pialaId">
+        <label class="block">Nama Piala</label>
+        <input type="text" id="namaPiala" class="border p-2 w-full mb-2" required>
+
+        <label class="block">Nama Siswa</label>
+        <input type="text" id="namaSiswa" class="border p-2 w-full mb-2" required>
+
+        <label class="block">Tanggal</label>
+        <input type="date" id="tanggalPiala" class="border p-2 w-full mb-4" required>
+
+        <div class="flex justify-end">
+          <button type="button" onclick="closeModal()" class="bg-gray-400 text-white px-4 py-2 mr-2 rounded">Batal</button>
+          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Simpan</button>
         </div>
+      </form>
     </div>
+  </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywZvxjwx6ua_-GOsnAnwqwoRVAsQnvXOmWQrVlxl08J4tOlfuq04rDGbqIrwNIb0zB/exec';
-            const userData = JSON.parse(localStorage.getItem('userData'));
-            if (!userData) { window.location.href = 'login.html'; return; }
+  <script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxr2ICo_C96PDnyqOl4-joM2l6Dy8c-wkfZcSIfgZ88_sto-Mx7PUo3_0ISTtD5Omw/exec"; // ganti dengan URL Web App lo
 
-            // --- Logika Halaman Piala ---
-            
-            let allPiala = [];
-            let allSiswa = [];
+    document.addEventListener("DOMContentLoaded", loadPiala);
 
-            async function fetchData() {
-                console.log("Fetching data for Piala page...");
-                // Nanti akan memanggil:
-                // const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getPialaPageData' }) });
-                // const data = await response.json();
-                // allPiala = data.piala;
-                // allSiswa = data.siswa;
-                
-                // Data contoh untuk pengembangan
-                allSiswa = [
-                    { siswa_id: 'siswa-001', nama_siswa: 'Budi Santoso' },
-                    { siswa_id: 'siswa-002', nama_siswa: 'Citra Lestari' }
-                ];
-                allPiala = [
-                    // Kosongkan untuk menguji blank state
-                    // { piala_id: 'p-001', tanggal_didapat: '2025-07-20', nama_kejuaraan: 'Olimpiade Sains Nasional', peringkat: 'Juara 1', pemegang_piala: 'Budi Santoso' },
-                    // { piala_id: 'p-002', tanggal_didapat: '2025-06-15', nama_kejuaraan: 'Lomba Cerdas Cermat', peringkat: 'Juara 3', pemegang_piala: 'Citra Lestari' },
-                ];
-
-                renderTable(allPiala);
-                populateSiswaFilters();
-            }
-
-            function renderTable(pialaList) {
-                // PERUBAHAN: Mengambil elemen tabel
-                const table = document.getElementById('piala-table');
-                const tableBody = document.getElementById('piala-table-body');
-                const blankState = document.getElementById('blank-state');
-                tableBody.innerHTML = '';
-
-                if (!pialaList || pialaList.length === 0) {
-                    // PERUBAHAN: Logika untuk menampilkan blank state
-                    blankState.classList.remove('hidden');
-                    table.classList.add('hidden');
-                    return;
-                }
-                blankState.classList.add('hidden');
-                table.classList.remove('hidden');
-
-                pialaList.forEach(piala => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${piala.nama_kejuaraan}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${piala.peringkat}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(piala.tanggal_didapat).toLocaleDateString('id-ID')}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${piala.pemegang_piala}</td>
-                        <td class="px-6 py-4 text-right text-sm font-medium">
-                            <button class="text-indigo-600 hover:text-indigo-900" onclick="editPiala('${piala.piala_id}')">Edit</button>
-                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="deletePiala('${piala.piala_id}')">Hapus</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            }
-            
-            function populateSiswaFilters() {
-                const formSiswaList = document.getElementById('siswa-list-form');
-                formSiswaList.innerHTML = '';
-                allSiswa.forEach(siswa => {
-                    const dataListOption = document.createElement('option');
-                    dataListOption.value = siswa.nama_siswa;
-                    formSiswaList.appendChild(dataListOption);
-                });
-            }
-
-            // --- Event Listeners & Form Handling ---
-            document.getElementById('add-piala-btn').addEventListener('click', () => {
-                document.getElementById('piala-form').reset();
-                document.getElementById('piala_id').value = '';
-                document.getElementById('modal-title').textContent = 'Tambah Data Piala';
-                document.getElementById('form-modal').classList.remove('hidden');
-            });
-
-            document.getElementById('cancel-form-btn').addEventListener('click', () => {
-                document.getElementById('form-modal').classList.add('hidden');
-            });
-
-            document.getElementById('piala-form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                // Logika untuk menyimpan data akan ditambahkan saat menghubungkan ke Code.gs
-                alert('Fungsi simpan belum terhubung ke backend.');
-            });
-
-            window.editPiala = (id) => {
-                alert(`Fungsi edit untuk piala ID: ${id} belum dibuat.`);
-            }
-
-            window.deletePiala = (id) => {
-                if (confirm('Anda yakin ingin menghapus data piala ini?')) {
-                    alert(`Fungsi hapus untuk piala ID: ${id} belum terhubung ke backend.`);
-                }
-            }
-
-            // Panggil fungsi awal
-            fetchData();
+    function loadPiala() {
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "getDataPiala" }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.json())
+      .then(data => {
+        const table = document.getElementById("pialaTable");
+        table.innerHTML = "";
+        data.forEach(row => {
+          table.innerHTML += `
+            <tr class="text-center border-b">
+              <td class="py-2">${row.id}</td>
+              <td class="py-2">${row.namaPiala}</td>
+              <td class="py-2">${row.namaSiswa}</td>
+              <td class="py-2">${row.tanggal}</td>
+              <td class="py-2">
+                <button class="bg-yellow-500 text-white px-2 py-1 rounded mr-2" onclick="openEditModal(${row.id}, '${row.namaPiala}', '${row.namaSiswa}', '${row.tanggal}')">Edit</button>
+                <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deletePiala(${row.id})">Hapus</button>
+              </td>
+            </tr>
+          `;
         });
-    </script>
-    
-    <script src="main.js"></script>
+      });
+    }
+
+    function openAddModal() {
+      document.getElementById("modalTitle").innerText = "Tambah Piala";
+      document.getElementById("pialaId").value = "";
+      document.getElementById("pialaForm").reset();
+      document.getElementById("modal").style.display = "flex";
+    }
+
+    function openEditModal(id, namaPiala, namaSiswa, tanggal) {
+      document.getElementById("modalTitle").innerText = "Edit Piala";
+      document.getElementById("pialaId").value = id;
+      document.getElementById("namaPiala").value = namaPiala;
+      document.getElementById("namaSiswa").value = namaSiswa;
+      document.getElementById("tanggalPiala").value = tanggal;
+      document.getElementById("modal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+
+    function savePiala(e) {
+      e.preventDefault();
+      const id = document.getElementById("pialaId").value;
+      const namaPiala = document.getElementById("namaPiala").value;
+      const namaSiswa = document.getElementById("namaSiswa").value;
+      const tanggal = document.getElementById("tanggalPiala").value;
+
+      const action = id ? "editPiala" : "addPiala";
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action, id, data: { namaPiala, namaSiswa, tanggal } }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        closeModal();
+        loadPiala();
+      });
+    }
+
+    function deletePiala(id) {
+      if (!confirm("Yakin mau hapus data ini?")) return;
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "deletePiala", id }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        loadPiala();
+      });
+    }
+  </script>
 </body>
 </html>
