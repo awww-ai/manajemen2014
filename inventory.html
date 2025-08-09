@@ -1,243 +1,145 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory - Sistem Informasi SSJ</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Inter', sans-serif; } </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventory</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 p-4">
 
-    <div class="flex h-screen">
-        <!-- Sidebar Placeholder -->
-        <aside id="sidebar-placeholder" class="w-64 bg-white shadow-md flex flex-col"></aside>
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="text-2xl font-bold mb-4">Inventory</h2>
+    <button onclick="openAddModal()" class="bg-blue-500 text-white px-4 py-2 rounded">Tambah Item</button>
 
-        <!-- Main Content -->
-        <main class="flex-1 p-6 sm:p-10 overflow-y-auto">
-            <header class="flex justify-between items-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-800">Inventory</h1>
-                <button id="add-item-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-                    Tambah Item
-                </button>
-            </header>
-
-            <!-- Data Table -->
-            <div class="bg-white shadow-md rounded-lg overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table id="inventory-table" class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Item</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jumlah</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kondisi</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tgl Pembelian</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jadwal Cek Berikutnya</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventory-table-body" class="bg-white divide-y divide-gray-200"></tbody>
-                    </table>
-                </div>
-                 <div id="blank-state" class="text-center py-10 text-gray-500 hidden">
-                    Belum ada item di inventory.
-                </div>
-            </div>
-        </main>
+    <!-- Table -->
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full bg-white border">
+        <thead>
+          <tr>
+            <th class="px-4 py-2 border">ID</th>
+            <th class="px-4 py-2 border">Nama Item</th>
+            <th class="px-4 py-2 border">Jumlah</th>
+            <th class="px-4 py-2 border">Kategori</th>
+            <th class="px-4 py-2 border">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="inventoryTable"></tbody>
+      </table>
     </div>
+  </div>
 
-    <!-- Modal Form -->
-    <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
-            <h3 id="modal-title" class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Tambah Item Baru</h3>
-            <form id="item-form">
-                <input type="hidden" id="item_id">
-                <div class="space-y-4">
-                    <div>
-                        <label for="nama_item" class="block text-sm font-medium text-gray-700">Nama Item</label>
-                        <input type="text" id="nama_item" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="jumlah" class="block text-sm font-medium text-gray-700">Jumlah</label>
-                            <input type="number" id="jumlah" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                        </div>
-                        <div>
-                            <label for="kondisi" class="block text-sm font-medium text-gray-700">Kondisi Awal</label>
-                            <select id="kondisi" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
-                                <option value="Baru">Baru</option>
-                                <option value="OK">OK</option>
-                                <option value="Rusak">Rusak</option>
-                                <option value="Habis">Habis</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="tanggal_pembelian" class="block text-sm font-medium text-gray-700">Tanggal Pembelian</label>
-                            <input type="date" id="tanggal_pembelian" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
-                        </div>
-                        <div>
-                            <label for="jadwal_cek" class="block text-sm font-medium text-gray-700">Periode Cek</label>
-                            <select id="jadwal_cek" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
-                                <option value="1">1 Bulan</option>
-                                <option value="2">2 Bulan</option>
-                                <option value="3">3 Bulan</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" id="cancel-form-btn" class="bg-white py-2 px-4 border border-gray-300 rounded-md">Batal</button>
-                    <button type="submit" id="save-form-btn" class="py-2 px-4 border border-transparent rounded-md text-white bg-blue-600">Simpan</button>
-                </div>
-            </form>
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded p-6 w-full max-w-md">
+      <h2 id="modalTitle" class="text-lg font-bold mb-4">Tambah Item</h2>
+      <form id="itemForm" onsubmit="saveItem(event)">
+        <input type="hidden" id="item_id">
+
+        <label class="block">Nama Item</label>
+        <input type="text" id="item_name" class="border p-2 w-full mb-2" required>
+
+        <label class="block">Jumlah</label>
+        <input type="number" id="item_qty" class="border p-2 w-full mb-2" required>
+
+        <label class="block">Kategori</label>
+        <input type="text" id="item_category" class="border p-2 w-full mb-4" required>
+
+        <div class="flex justify-end">
+          <button type="button" onclick="closeModal()" class="bg-gray-400 text-white px-4 py-2 mr-2 rounded">Batal</button>
+          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Simpan</button>
         </div>
+      </form>
     </div>
+  </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywZvxjwx6ua_-GOsnAnwqwoRVAsQnvXOmWQrVlxl08J4tOlfuq04rDGbqIrwNIb0zB/exec';
-            const userData = JSON.parse(localStorage.getItem('userData'));
-            if (!userData) { window.location.href = 'login.html'; return; }
+  <script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxr2ICo_C96PDnyqOl4-joM2l6Dy8c-wkfZcSIfgZ88_sto-Mx7PUo3_0ISTtD5Omw/exec"; // ganti dengan URL Web App lo
 
-            let allItems = [];
+    document.addEventListener("DOMContentLoaded", loadInventory);
 
-            async function fetchData() {
-                // Data contoh untuk pengembangan
-                const today = new Date();
-                const oneMonthAgo = new Date(new Date().setMonth(today.getMonth() - 1));
-                const twoMonthsAgo = new Date(new Date().setMonth(today.getMonth() - 2));
-
-                allItems = [
-                    { item_id: 'inv-001', nama_item: 'Bola Sepak', jumlah: 10, kondisi: 'OK', tanggal_pembelian: today.toISOString().split('T')[0], jadwal_cek: '1' },
-                    { item_id: 'inv-002', nama_item: 'Cone Latihan', jumlah: 20, kondisi: 'OK', tanggal_pembelian: oneMonthAgo.toISOString().split('T')[0], jadwal_cek: '1' }, // Ini akan jadi 'Perlu Dicek'
-                    { item_id: 'inv-003', nama_item: 'Rompi Latihan', jumlah: 15, kondisi: 'Rusak', tanggal_pembelian: twoMonthsAgo.toISOString().split('T')[0], jadwal_cek: '3' },
-                ];
-
-                renderTable(allItems);
-            }
-
-            function renderTable(itemList) {
-                const table = document.getElementById('inventory-table');
-                const tableBody = document.getElementById('inventory-table-body');
-                const blankState = document.getElementById('blank-state');
-                tableBody.innerHTML = '';
-
-                if (!itemList || itemList.length === 0) {
-                    blankState.classList.remove('hidden');
-                    table.classList.add('hidden');
-                    return;
-                }
-                blankState.classList.add('hidden');
-                table.classList.remove('hidden');
-
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                itemList.forEach(item => {
-                    const tglBeli = new Date(item.tanggal_pembelian);
-                    const jadwalCekDate = new Date(tglBeli.setMonth(tglBeli.getMonth() + parseInt(item.jadwal_cek)));
-                    
-                    let displayKondisi = item.kondisi;
-                    let kondisiClass = 'bg-gray-100 text-gray-800';
-
-                    if (today >= jadwalCekDate && item.kondisi !== 'Rusak' && item.kondisi !== 'Habis') {
-                        displayKondisi = 'Perlu Dicek';
-                    }
-
-                    switch(displayKondisi) {
-                        case 'Baru':
-                        case 'OK':
-                            kondisiClass = 'bg-green-100 text-green-800'; break;
-                        case 'Perlu Dicek':
-                            kondisiClass = 'bg-yellow-100 text-yellow-800 animate-pulse'; break;
-                        case 'Rusak':
-                        case 'Habis':
-                            kondisiClass = 'bg-red-100 text-red-800'; break;
-                    }
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${item.nama_item}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${item.jumlah}</td>
-                        <td class="px-6 py-4 text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${kondisiClass}">${displayKondisi}</span></td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${new Date(item.tanggal_pembelian).toLocaleDateString('id-ID')}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${jadwalCekDate.toLocaleDateString('id-ID')}</td>
-                        <td class="px-6 py-4 text-right text-sm font-medium">
-                            <button class="text-indigo-600 hover:text-indigo-900" onclick="editItem('${item.item_id}')">Edit</button>
-                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="deleteItem('${item.item_id}')">Hapus</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            }
-            
-            // --- Event Listeners & Form Handling ---
-            const formModal = document.getElementById('form-modal');
-            const itemForm = document.getElementById('item-form');
-            const modalTitle = document.getElementById('modal-title');
-
-            document.getElementById('add-item-btn').addEventListener('click', () => {
-                itemForm.reset();
-                document.getElementById('item_id').value = '';
-                modalTitle.textContent = 'Tambah Item Baru';
-                document.getElementById('kondisi').disabled = false;
-                formModal.classList.remove('hidden');
-            });
-
-            document.getElementById('cancel-form-btn').addEventListener('click', () => {
-                formModal.classList.add('hidden');
-            });
-
-            itemForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                alert('Fungsi simpan belum terhubung ke backend.');
-            });
-
-            window.editItem = (id) => {
-                const item = allItems.find(i => i.item_id === id);
-                if (!item) return;
-
-                modalTitle.textContent = 'Edit Item';
-                document.getElementById('item_id').value = item.item_id;
-                document.getElementById('nama_item').value = item.nama_item;
-                document.getElementById('jumlah').value = item.jumlah;
-                document.getElementById('tanggal_pembelian').value = item.tanggal_pembelian;
-                document.getElementById('jadwal_cek').value = item.jadwal_cek;
-                
-                // Logika khusus untuk kondisi
-                const kondisiSelect = document.getElementById('kondisi');
-                kondisiSelect.value = item.kondisi;
-                
-                const tglBeli = new Date(item.tanggal_pembelian);
-                const jadwalCekDate = new Date(tglBeli.setMonth(tglBeli.getMonth() + parseInt(item.jadwal_cek)));
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                if (today >= jadwalCekDate) {
-                    kondisiSelect.disabled = false;
-                    alert("Item ini sudah melewati jadwal cek. Silakan perbarui kondisinya.");
-                } else {
-                    kondisiSelect.disabled = true;
-                }
-
-                formModal.classList.remove('hidden');
-            }
-
-            window.deleteItem = (id) => {
-                if (confirm('Anda yakin ingin menghapus item ini?')) {
-                    alert(`Fungsi hapus untuk item ID: ${id} belum terhubung ke backend.`);
-                }
-            }
-
-            fetchData();
+    function loadInventory() {
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "getInventory" }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.json())
+      .then(data => {
+        const table = document.getElementById("inventoryTable");
+        table.innerHTML = "";
+        data.forEach(item => {
+          table.innerHTML += `
+            <tr class="text-center border-b">
+              <td class="py-2 border">${item.id}</td>
+              <td class="py-2 border">${item.nama}</td>
+              <td class="py-2 border">${item.jumlah}</td>
+              <td class="py-2 border">${item.kategori}</td>
+              <td class="py-2 border">
+                <button class="bg-yellow-500 text-white px-2 py-1 rounded mr-2" onclick="openEditModal('${item.id}', '${item.nama}', '${item.jumlah}', '${item.kategori}')">Edit</button>
+                <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteItem('${item.id}')">Hapus</button>
+              </td>
+            </tr>
+          `;
         });
-    </script>
-    
-    <script src="main.js"></script>
+      });
+    }
+
+    function openAddModal() {
+      document.getElementById("modalTitle").innerText = "Tambah Item";
+      document.getElementById("item_id").value = "";
+      document.getElementById("itemForm").reset();
+      document.getElementById("modal").style.display = "flex";
+    }
+
+    function openEditModal(id, nama, jumlah, kategori) {
+      document.getElementById("modalTitle").innerText = "Edit Item";
+      document.getElementById("item_id").value = id;
+      document.getElementById("item_name").value = nama;
+      document.getElementById("item_qty").value = jumlah;
+      document.getElementById("item_category").value = kategori;
+      document.getElementById("modal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+
+    function saveItem(e) {
+      e.preventDefault();
+      const id = document.getElementById("item_id").value;
+      const nama = document.getElementById("item_name").value;
+      const jumlah = document.getElementById("item_qty").value;
+      const kategori = document.getElementById("item_category").value;
+
+      const action = id ? "updateInventory" : "addInventory";
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action, id, data: { nama, jumlah, kategori } }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        closeModal();
+        loadInventory();
+      });
+    }
+
+    function deleteItem(id) {
+      if (!confirm("Yakin mau hapus item ini?")) return;
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "deleteInventory", id }),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(res => res.text())
+      .then(msg => {
+        alert(msg);
+        loadInventory();
+      });
+    }
+  </script>
 </body>
 </html>
