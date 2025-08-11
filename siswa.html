@@ -36,7 +36,6 @@
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Siswa</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Ortu</th>
-                                <!-- PERUBAHAN DI SINI -->
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Punggung</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
@@ -108,7 +107,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyQIrC8z8qe4qsdY_IBu2Dy0rJ73y5R6HOUGttDsm8tIMiLJS5KKbQ7CvZz7CLOzMtl/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwNXFDRMG_XZcAP4CEHf14uQI2pgi6uEwoi3dSqEi-xjrOWuCPon3O-63kPsSpB_kyE/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
@@ -158,7 +157,6 @@
                     const row = document.createElement('tr');
                     row.className = 'cursor-pointer hover:bg-gray-50';
                     row.onclick = () => viewDetails(siswa.siswa_id);
-                    // PERUBAHAN DI SINI
                     row.innerHTML = `
                         <td class="px-6 py-4 text-sm font-medium text-gray-900">${siswa.nama_siswa}</td>
                         <td class="px-6 py-4 text-sm text-gray-500">${siswa.nama_orang_tua || '-'}</td>
@@ -290,7 +288,6 @@
             cancelFormBtn.addEventListener('click', closeFormModal);
             closeDetailBtn.addEventListener('click', () => detailModal.classList.add('hidden'));
             
-            // PERUBAHAN DI SINI
             const showLoading = () => tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
             const showEmpty = () => {
                 table.classList.add('hidden');
