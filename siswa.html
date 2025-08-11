@@ -36,6 +36,8 @@
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Siswa</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Ortu</th>
+                                <!-- PERUBAHAN DI SINI -->
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Punggung</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
                             </tr>
@@ -66,8 +68,8 @@
                         <input type="text" id="nama_orang_tua" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
                     </div>
                     <div>
-                        <label for="no_hp" class="block text-sm font-medium text-gray-700">No. HP</label>
-                        <input type="tel" id="no_hp" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
+                        <label for="nomor_punggung" class="block text-sm font-medium text-gray-700">Nomor Punggung</label>
+                        <input type="number" id="nomor_punggung" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2">
                     </div>
                     <div>
                         <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
@@ -106,7 +108,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyIWvGJ_kMe2ie_SHGd58Khhj_Cov932_dzGZeUTw-Hc5frcMlqPWD-sFAPnlnyBQom/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyQIrC8z8qe4qsdY_IBu2Dy0rJ73y5R6HOUGttDsm8tIMiLJS5KKbQ7CvZz7CLOzMtl/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
@@ -156,9 +158,11 @@
                     const row = document.createElement('tr');
                     row.className = 'cursor-pointer hover:bg-gray-50';
                     row.onclick = () => viewDetails(siswa.siswa_id);
+                    // PERUBAHAN DI SINI
                     row.innerHTML = `
                         <td class="px-6 py-4 text-sm font-medium text-gray-900">${siswa.nama_siswa}</td>
                         <td class="px-6 py-4 text-sm text-gray-500">${siswa.nama_orang_tua || '-'}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${siswa.nomor_punggung || '-'}</td>
                         <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${siswa.status === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${siswa.status}</span></td>
                         <td class="px-6 py-4 text-right text-sm font-medium">
                             <button class="text-indigo-600 hover:text-indigo-900" onclick="event.stopPropagation(); editSiswa('${siswa.siswa_id}')">Edit</button>
@@ -182,7 +186,7 @@
                     siswa_id: siswaId,
                     nama_siswa: document.getElementById('nama_siswa').value,
                     nama_orang_tua: document.getElementById('nama_orang_tua').value,
-                    no_hp: document.getElementById('no_hp').value,
+                    nomor_punggung: document.getElementById('nomor_punggung').value,
                     status: document.getElementById('status').value,
                     foto: await readFileAsBase64(document.getElementById('foto').files[0]),
                     berkas: await readFileAsBase64(document.getElementById('berkas').files[0])
@@ -226,7 +230,7 @@
                     <div class="flex justify-center"><img src="${siswa.url_foto || 'https://placehold.co/150x150?text=No+Foto'}" alt="Foto Siswa" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200"></div>
                     <p><strong>Nama:</strong> ${siswa.nama_siswa}</p>
                     <p><strong>Nama Ortu:</strong> ${siswa.nama_orang_tua || '-'}</p>
-                    <p><strong>No. HP:</strong> ${siswa.no_hp || '-'}</p>
+                    <p><strong>Nomor Punggung:</strong> ${siswa.nomor_punggung || '-'}</p>
                     <p><strong>Status:</strong> ${siswa.status}</p>
                     ${siswa.url_berkas ? `<a href="${siswa.url_berkas}" target="_blank" class="block w-full text-center bg-green-500 text-white py-2 rounded-md hover:bg-green-600">Unduh Berkas</a>` : '<p>Berkas tidak tersedia.</p>'}
                 `;
@@ -241,7 +245,7 @@
                 document.getElementById('siswa_id').value = siswa.siswa_id;
                 document.getElementById('nama_siswa').value = siswa.nama_siswa;
                 document.getElementById('nama_orang_tua').value = siswa.nama_orang_tua;
-                document.getElementById('no_hp').value = siswa.no_hp;
+                document.getElementById('nomor_punggung').value = siswa.nomor_punggung;
                 document.getElementById('status').value = siswa.status;
                 
                 document.getElementById('foto').value = '';
@@ -286,7 +290,8 @@
             cancelFormBtn.addEventListener('click', closeFormModal);
             closeDetailBtn.addEventListener('click', () => detailModal.classList.add('hidden'));
             
-            const showLoading = () => tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
+            // PERUBAHAN DI SINI
+            const showLoading = () => tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
             const showEmpty = () => {
                 table.classList.add('hidden');
                 blankState.classList.remove('hidden');
