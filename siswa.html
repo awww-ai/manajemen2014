@@ -226,10 +226,10 @@
                 
                 detailContent.innerHTML = `
                     <div class="flex justify-center">
-                    <img src="${siswa.foto ? 'https://drive.google.com/uc?export=view&id=' + siswa.foto : 'https://placehold.co/150x150?text=No+Foto'}" 
-                     alt="Foto Siswa" 
-                     class="w-32 h-32 rounded-full object-cover border-4 border-gray-200">
-                    </div>
+  <img src="${siswa.foto ? `https://drive.google.com/uc?export=view&id=${siswa.foto}` : 'https://placehold.co/150x150?text=No+Foto'}" 
+       alt="Foto Siswa" 
+       class="w-32 h-32 rounded-full object-cover border-4 border-gray-200">
+</div>
 
                     <p><strong>Nama:</strong> ${siswa.nama_siswa}</p>
                     <p><strong>Nama Ortu:</strong> ${siswa.nama_orang_tua || '-'}</p>
