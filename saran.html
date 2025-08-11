@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saran & Kritik - Sistem Informasi SSJ</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- PERUBAHAN: Menambahkan library jsPDF dan jsPDF-AutoTable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +22,6 @@
         <main class="flex-1 p-6 sm:p-10 overflow-y-auto">
             <header class="flex justify-between items-center mb-8">
                 <h1 class="text-3xl font-bold text-gray-800">Saran & Kritik</h1>
-                <!-- PERUBAHAN: Menambahkan div untuk mengelompokkan tombol -->
                 <div class="flex space-x-2">
                     <button id="export-pdf-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">
                         Export PDF
@@ -108,27 +106,50 @@
         </div>
     </div>
 
+    <!-- Modal Detail -->
+    <div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
+             <h3 class="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">Detail Saran</h3>
+             <div id="detail-content" class="space-y-2"></div>
+             <div class="mt-6 flex justify-end">
+                <button id="close-detail-btn" class="bg-gray-200 py-2 px-4 border rounded-md">Tutup</button>
+             </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywZvxjwx6ua_-GOsnAnwqwoRVAsQnvXOmWQrVlxl08J4tOlfuq04rDGbqIrwNIb0zB/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzU_Xt19O0l4IJC4fJzK3wh-GyuBIaWjYV0uAjSLIVcM2HTPueFWGrcmjknH_0lLAP6/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
             let allSaran = [];
+            let filteredSaran = [];
+
+            const table = document.getElementById('saran-table');
+            const tableBody = document.getElementById('saran-table-body');
+            const blankState = document.getElementById('blank-state');
+            const formModal = document.getElementById('form-modal');
+            const saranForm = document.getElementById('saran-form');
+            const modalTitle = document.getElementById('modal-title');
+            const detailModal = document.getElementById('detail-modal');
+            const detailContent = document.getElementById('detail-content');
 
             async function fetchData() {
-                // Data contoh untuk pengembangan
-                const today = new Date();
-                const yesterday = new Date(new Date().setDate(today.getDate() - 1));
-                const lastWeek = new Date(new Date().setDate(today.getDate() - 7));
-
-                allSaran = [
-                    { saran_id: 's-001', tanggal_kirim: today.toISOString(), pengirim: 'Budi Santoso', isi_saran: 'Jadwal latihan sebaiknya ditambah di hari Sabtu.', status: 'Aktif' },
-                    { saran_id: 's-002', tanggal_kirim: yesterday.toISOString(), pengirim: 'Anonymous', isi_saran: 'Perlu ada perbaikan pada fasilitas toilet.', status: 'Aktif' },
-                    { saran_id: 's-003', tanggal_kirim: lastWeek.toISOString(), pengirim: 'Orang Tua Siswa', isi_saran: 'Terima kasih atas bimbingan pelatih.', status: 'Diarsipkan' },
-                ];
-
-                updateView();
+                showLoading();
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST', redirect: 'follow',
+                        body: JSON.stringify({ action: 'getSaranData' }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const data = await response.json();
+                    if (data.status !== 'success') throw new Error(data.message);
+                    allSaran = data.data;
+                    updateView();
+                } catch (error) {
+                    showError(error.message);
+                }
             }
 
             function updateView() {
@@ -136,113 +157,168 @@
                 const fromDate = document.getElementById('filter-dari-tanggal').value;
                 const toDate = document.getElementById('filter-ke-tanggal').value;
 
-                let filteredData = allSaran.filter(item => {
-                    if (statusFilter !== 'Semua' && item.status !== statusFilter) {
-                        return false;
-                    }
-                    if (fromDate) {
-                        if (new Date(item.tanggal_kirim).setHours(0,0,0,0) < new Date(fromDate).getTime()) return false;
-                    }
-                    if (toDate) {
-                        if (new Date(item.tanggal_kirim).setHours(0,0,0,0) > new Date(toDate).getTime()) return false;
-                    }
+                filteredSaran = allSaran.filter(item => {
+                    // --- PERBAIKAN DI SINI ---
+                    // Anggap item 'Aktif' jika statusnya kosong (untuk data lama)
+                    const itemStatus = item.status || 'Aktif'; 
+                    if (statusFilter !== 'Semua' && itemStatus !== statusFilter) return false;
+                    
+                    const itemDate = new Date(item.tanggal_kirim);
+                    if (fromDate && itemDate < new Date(fromDate)) return false;
+                    if (toDate && itemDate > new Date(new Date(toDate).setHours(23, 59, 59))) return false;
                     return true;
                 });
 
-                renderTable(filteredData);
+                renderTable(filteredSaran);
             }
 
             function renderTable(saranList) {
-                const table = document.getElementById('saran-table');
-                const tableBody = document.getElementById('saran-table-body');
-                const blankState = document.getElementById('blank-state');
                 tableBody.innerHTML = '';
-
                 if (!saranList || saranList.length === 0) {
-                    blankState.classList.remove('hidden');
-                    table.classList.add('hidden');
+                    showEmpty();
                     return;
                 }
-                blankState.classList.add('hidden');
                 table.classList.remove('hidden');
+                blankState.classList.add('hidden');
 
-                saranList.forEach(saran => {
+                const sortedData = saranList.sort((a, b) => new Date(b.tanggal_kirim) - new Date(a.tanggal_kirim));
+
+                sortedData.forEach(saran => {
                     const row = document.createElement('tr');
-                    const isArchived = saran.status === 'Diarsipkan';
-                    row.className = isArchived ? 'bg-gray-50' : '';
+                    const itemStatus = saran.status || 'Aktif'; // Pastikan status selalu ada
+                    const isArchived = itemStatus === 'Diarsipkan';
+                    row.className = `cursor-pointer hover:bg-gray-50 ${isArchived ? 'bg-gray-50' : ''}`;
+                    row.onclick = () => window.viewDetail(saran.saran_id);
                     
                     row.innerHTML = `
                         <td class="px-6 py-4 text-sm text-gray-500">${new Date(saran.tanggal_kirim).toLocaleString('id-ID')}</td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-900">${saran.pengirim}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${saran.isi_saran}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500 truncate" style="max-width: 300px;">${saran.isi_saran}</td>
                         <td class="px-6 py-4 text-right text-sm font-medium">
-                            <button class="text-gray-500 hover:text-gray-800" onclick="archiveSaran('${saran.saran_id}', ${!isArchived})">${isArchived ? 'Batal Arsip' : 'Arsipkan'}</button>
-                            <button class="text-indigo-600 hover:text-indigo-900 ml-4" onclick="editSaran('${saran.saran_id}')">Edit</button>
-                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="deleteSaran('${saran.saran_id}')">Hapus</button>
+                            <button class="text-gray-500 hover:text-gray-800" onclick="event.stopPropagation(); archiveSaran('${saran.saran_id}', ${!isArchived})">${isArchived ? 'Batal Arsip' : 'Arsipkan'}</button>
+                            <button class="text-indigo-600 hover:text-indigo-900 ml-4" onclick="event.stopPropagation(); editSaran('${saran.saran_id}')">Edit</button>
+                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="event.stopPropagation(); deleteSaran('${saran.saran_id}')">Hapus</button>
                         </td>
                     `;
                     tableBody.appendChild(row);
                 });
             }
             
-            // --- Event Listeners & Form Handling ---
-            const formModal = document.getElementById('form-modal');
-            const saranForm = document.getElementById('saran-form');
-            const modalTitle = document.getElementById('modal-title');
+            saranForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const saveBtn = document.getElementById('save-form-btn');
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Menyimpan...';
+
+                const id = document.getElementById('saran_id').value;
+                const isUpdate = !!id;
+                let pengirim = document.getElementById('pengirim').value.trim();
+                if (pengirim === '') pengirim = 'Anonymous';
+
+                const formData = {
+                    action: isUpdate ? 'updateRow' : 'addSaran',
+                    sheetName: 'SaranKritik',
+                    id: id,
+                    idColumnName: 'saran_id',
+                    data: {
+                        saran_id: id,
+                        pengirim: pengirim,
+                        isi_saran: document.getElementById('isi_saran').value,
+                        status: 'Aktif'
+                    }
+                };
+                if (!isUpdate) delete formData.data.saran_id;
+
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST', redirect: 'follow',
+                        body: JSON.stringify(formData),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const result = await response.json();
+                    alert(result.message);
+                    if (result.status === 'success') {
+                        closeFormModal();
+                        fetchData();
+                    }
+                } catch (error) {
+                    alert('Gagal menyimpan: ' + error.message);
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Simpan';
+                }
+            });
+
+            window.viewDetail = (id) => {
+                const saran = allSaran.find(s => s.saran_id === id);
+                if (!saran) return;
+                detailContent.innerHTML = `
+                    <p><strong>Tanggal:</strong> ${new Date(saran.tanggal_kirim).toLocaleString('id-ID')}</p>
+                    <p><strong>Pengirim:</strong> ${saran.pengirim}</p>
+                    <p class="font-medium mt-2">Isi Saran:</p>
+                    <p class="p-2 bg-gray-50 rounded-md whitespace-pre-wrap">${saran.isi_saran}</p>
+                `;
+                detailModal.classList.remove('hidden');
+            };
+
+            window.editSaran = (id) => {
+                const saran = allSaran.find(s => s.saran_id === id);
+                if (!saran) return;
+                modalTitle.textContent = 'Edit Saran & Kritik';
+                document.getElementById('saran_id').value = saran.saran_id;
+                document.getElementById('pengirim').value = saran.pengirim === 'Anonymous' ? '' : saran.pengirim;
+                document.getElementById('isi_saran').value = saran.isi_saran;
+                openFormModal();
+            };
+
+            window.deleteSaran = async (id) => {
+                if (confirm('Anda yakin ingin menghapus data ini?')) {
+                    try {
+                        const response = await fetch(WEB_APP_URL, {
+                            method: 'POST', redirect: 'follow',
+                            body: JSON.stringify({ action: 'deleteRow', sheetName: 'SaranKritik', id: id, idColumnName: 'saran_id' }),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        });
+                        const result = await response.json();
+                        alert(result.message);
+                        if (result.status === 'success') fetchData();
+                    } catch (error) { alert('Gagal menghapus: ' + error.message); }
+                }
+            }
+
+            window.archiveSaran = async (id, shouldArchive) => {
+                const newStatus = shouldArchive ? 'Diarsipkan' : 'Aktif';
+                const actionText = shouldArchive ? 'mengarsipkan' : 'membatalkan arsip';
+                if (confirm(`Yakin ingin ${actionText} saran ini?`)) {
+                    try {
+                        const response = await fetch(WEB_APP_URL, {
+                            method: 'POST', redirect: 'follow',
+                            body: JSON.stringify({ action: 'updateSaranStatus', saran_id: id, status: newStatus }),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        });
+                        const result = await response.json();
+                        alert(result.message);
+                        if (result.status === 'success') fetchData();
+                    } catch (error) { alert('Gagal mengubah status: ' + error.message); }
+                }
+            }
+
+            const openFormModal = () => formModal.classList.remove('hidden');
+            const closeFormModal = () => {
+                formModal.classList.add('hidden');
+                saranForm.reset();
+            };
 
             document.getElementById('add-saran-btn').addEventListener('click', () => {
                 saranForm.reset();
                 document.getElementById('saran_id').value = '';
                 modalTitle.textContent = 'Tambah Saran & Kritik';
-                formModal.classList.remove('hidden');
+                openFormModal();
             });
-
-            document.getElementById('cancel-form-btn').addEventListener('click', () => {
-                formModal.classList.add('hidden');
-            });
-
-            saranForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                let pengirim = document.getElementById('pengirim').value.trim();
-                if (pengirim === '') {
-                    pengirim = 'Anonymous';
-                }
-                alert(`Pengirim: ${pengirim}\nFungsi simpan belum terhubung ke backend.`);
-            });
-
-            // PERUBAHAN: Menambahkan fungsi export PDF
-            document.getElementById('export-pdf-btn').addEventListener('click', () => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-
-                doc.text("Laporan Saran & Kritik", 14, 16);
-                doc.autoTable({
-                    html: '#saran-table',
-                    startY: 20,
-                    // Hapus kolom aksi dari PDF
-                    columns: [
-                        { header: 'Tanggal', dataKey: 0 },
-                        { header: 'Pengirim', dataKey: 1 },
-                        { header: 'Isi Saran', dataKey: 2 },
-                    ]
-                });
-
-                doc.save('laporan-saran-kritik.pdf');
-            });
-
-            window.editSaran = (id) => alert(`Fungsi edit untuk ID: ${id} belum dibuat.`);
-            window.deleteSaran = (id) => {
-                if(confirm('Yakin ingin menghapus?')) alert(`Fungsi hapus untuk ID: ${id} belum terhubung.`);
-            }
-            window.archiveSaran = (id, shouldArchive) => {
-                const action = shouldArchive ? 'mengarsipkan' : 'membatalkan arsip';
-                if(confirm(`Yakin ingin ${action} saran ini?`)) alert(`Fungsi arsip untuk ID: ${id} belum terhubung.`);
-            }
-
-            // Filters
-            document.getElementById('filter-status').addEventListener('change', updateView);
-            document.getElementById('filter-dari-tanggal').addEventListener('change', updateView);
-            document.getElementById('filter-ke-tanggal').addEventListener('change', updateView);
+            document.getElementById('cancel-form-btn').addEventListener('click', closeFormModal);
+            document.getElementById('close-detail-btn').addEventListener('click', () => detailModal.classList.add('hidden'));
+            
+            document.querySelectorAll('#filter-status, #filter-dari-tanggal, #filter-ke-tanggal').forEach(el => el.addEventListener('change', updateView));
             document.querySelectorAll('.preset-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const range = parseInt(this.dataset.range);
@@ -254,6 +330,30 @@
                     updateView();
                 });
             });
+
+            document.getElementById('export-pdf-btn').addEventListener('click', () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const data = filteredSaran.map(s => [
+                    new Date(s.tanggal_kirim).toLocaleDateString('id-ID'),
+                    s.pengirim,
+                    s.isi_saran
+                ]);
+                doc.text("Laporan Saran & Kritik", 14, 16);
+                doc.autoTable({
+                    head: [['Tanggal', 'Pengirim', 'Isi Saran']],
+                    body: data,
+                    startY: 20
+                });
+                doc.save('laporan-saran-kritik.pdf');
+            });
+
+            const showLoading = () => tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
+            const showEmpty = () => {
+                table.classList.add('hidden');
+                blankState.classList.remove('hidden');
+            };
+            const showError = (message) => alert('Terjadi kesalahan: ' + message);
 
             fetchData();
         });

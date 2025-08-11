@@ -66,7 +66,7 @@
                             <input type="number" id="jumlah" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" required>
                         </div>
                         <div>
-                            <label for="kondisi" class="block text-sm font-medium text-gray-700">Kondisi Awal</label>
+                            <label for="kondisi" class="block text-sm font-medium text-gray-700">Kondisi</label>
                             <select id="kondisi" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
                                 <option value="Baru">Baru</option>
                                 <option value="OK">OK</option>
@@ -100,64 +100,67 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywZvxjwx6ua_-GOsnAnwqwoRVAsQnvXOmWQrVlxl08J4tOlfuq04rDGbqIrwNIb0zB/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxr2ICo_C96PDnyqOl4-joM2l6Dy8c-wkfZcSIfgZ88_sto-Mx7PUo3_0ISTtD5Omw/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
             let allItems = [];
 
+            const table = document.getElementById('inventory-table');
+            const tableBody = document.getElementById('inventory-table-body');
+            const blankState = document.getElementById('blank-state');
+            const formModal = document.getElementById('form-modal');
+            const itemForm = document.getElementById('item-form');
+            const modalTitle = document.getElementById('modal-title');
+
             async function fetchData() {
-                // Data contoh untuk pengembangan
-                const today = new Date();
-                const oneMonthAgo = new Date(new Date().setMonth(today.getMonth() - 1));
-                const twoMonthsAgo = new Date(new Date().setMonth(today.getMonth() - 2));
-
-                allItems = [
-                    { item_id: 'inv-001', nama_item: 'Bola Sepak', jumlah: 10, kondisi: 'OK', tanggal_pembelian: today.toISOString().split('T')[0], jadwal_cek: '1' },
-                    { item_id: 'inv-002', nama_item: 'Cone Latihan', jumlah: 20, kondisi: 'OK', tanggal_pembelian: oneMonthAgo.toISOString().split('T')[0], jadwal_cek: '1' }, // Ini akan jadi 'Perlu Dicek'
-                    { item_id: 'inv-003', nama_item: 'Rompi Latihan', jumlah: 15, kondisi: 'Rusak', tanggal_pembelian: twoMonthsAgo.toISOString().split('T')[0], jadwal_cek: '3' },
-                ];
-
-                renderTable(allItems);
+                showLoading();
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST', redirect: 'follow',
+                        body: JSON.stringify({ action: 'getInventoryData' }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const data = await response.json();
+                    if (data.status !== 'success') throw new Error(data.message);
+                    
+                    allItems = data.data;
+                    renderTable(allItems);
+                } catch (error) {
+                    showError(error.message);
+                }
             }
 
             function renderTable(itemList) {
-                const table = document.getElementById('inventory-table');
-                const tableBody = document.getElementById('inventory-table-body');
-                const blankState = document.getElementById('blank-state');
                 tableBody.innerHTML = '';
-
                 if (!itemList || itemList.length === 0) {
-                    blankState.classList.remove('hidden');
-                    table.classList.add('hidden');
+                    showEmpty();
                     return;
                 }
-                blankState.classList.add('hidden');
                 table.classList.remove('hidden');
+                blankState.classList.add('hidden');
 
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
-                itemList.forEach(item => {
+                const sortedData = itemList.sort((a, b) => new Date(b.tanggal_pembelian) - new Date(a.tanggal_pembelian));
+
+                sortedData.forEach(item => {
                     const tglBeli = new Date(item.tanggal_pembelian);
-                    const jadwalCekDate = new Date(tglBeli.setMonth(tglBeli.getMonth() + parseInt(item.jadwal_cek)));
+                    const jadwalCekDate = new Date(new Date(item.tanggal_pembelian).setMonth(tglBeli.getMonth() + parseInt(item.jadwal_cek)));
                     
                     let displayKondisi = item.kondisi;
-                    let kondisiClass = 'bg-gray-100 text-gray-800';
+                    let kondisiClass = '';
 
-                    if (today >= jadwalCekDate && item.kondisi !== 'Rusak' && item.kondisi !== 'Habis') {
+                    if (today >= jadwalCekDate && !['Rusak', 'Habis'].includes(item.kondisi)) {
                         displayKondisi = 'Perlu Dicek';
                     }
 
                     switch(displayKondisi) {
-                        case 'Baru':
-                        case 'OK':
-                            kondisiClass = 'bg-green-100 text-green-800'; break;
-                        case 'Perlu Dicek':
-                            kondisiClass = 'bg-yellow-100 text-yellow-800 animate-pulse'; break;
-                        case 'Rusak':
-                        case 'Habis':
-                            kondisiClass = 'bg-red-100 text-red-800'; break;
+                        case 'Baru': case 'OK': kondisiClass = 'bg-green-100 text-green-800'; break;
+                        case 'Perlu Dicek': kondisiClass = 'bg-yellow-100 text-yellow-800 animate-pulse'; break;
+                        case 'Rusak': case 'Habis': kondisiClass = 'bg-red-100 text-red-800'; break;
+                        default: kondisiClass = 'bg-gray-100 text-gray-800';
                     }
 
                     const row = document.createElement('tr');
@@ -168,71 +171,127 @@
                         <td class="px-6 py-4 text-sm text-gray-500">${new Date(item.tanggal_pembelian).toLocaleDateString('id-ID')}</td>
                         <td class="px-6 py-4 text-sm text-gray-500">${jadwalCekDate.toLocaleDateString('id-ID')}</td>
                         <td class="px-6 py-4 text-right text-sm font-medium">
-                            <button class="text-indigo-600 hover:text-indigo-900" onclick="editItem('${item.item_id}')">Edit</button>
-                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="deleteItem('${item.item_id}')">Hapus</button>
+                            <button class="text-indigo-600 hover:text-indigo-900" onclick="window.editItem('${item.item_id}')">Edit</button>
+                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="window.deleteItem('${item.item_id}')">Hapus</button>
                         </td>
                     `;
                     tableBody.appendChild(row);
                 });
             }
             
-            // --- Event Listeners & Form Handling ---
-            const formModal = document.getElementById('form-modal');
-            const itemForm = document.getElementById('item-form');
-            const modalTitle = document.getElementById('modal-title');
-
-            document.getElementById('add-item-btn').addEventListener('click', () => {
-                itemForm.reset();
-                document.getElementById('item_id').value = '';
-                modalTitle.textContent = 'Tambah Item Baru';
-                document.getElementById('kondisi').disabled = false;
-                formModal.classList.remove('hidden');
-            });
-
-            document.getElementById('cancel-form-btn').addEventListener('click', () => {
-                formModal.classList.add('hidden');
-            });
-
-            itemForm.addEventListener('submit', (e) => {
+            itemForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                alert('Fungsi simpan belum terhubung ke backend.');
+                const saveBtn = document.getElementById('save-form-btn');
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Menyimpan...';
+
+                const id = document.getElementById('item_id').value;
+                const isUpdate = !!id;
+
+                const formData = {
+                    action: isUpdate ? 'updateItem' : 'addItem',
+                    sheetName: 'Inventory',
+                    id: id,
+                    idColumnName: 'item_id',
+                    data: {
+                        item_id: id,
+                        nama_item: document.getElementById('nama_item').value,
+                        jumlah: document.getElementById('jumlah').value,
+                        kondisi: document.getElementById('kondisi').value,
+                        tanggal_pembelian: document.getElementById('tanggal_pembelian').value,
+                        jadwal_cek: document.getElementById('jadwal_cek').value
+                    }
+                };
+                if (!isUpdate) delete formData.data.item_id;
+
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST', redirect: 'follow',
+                        body: JSON.stringify(formData),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const result = await response.json();
+                    alert(result.message);
+                    if (result.status === 'success') {
+                        closeFormModal();
+                        fetchData();
+                    }
+                } catch (error) {
+                    alert('Gagal menyimpan: ' + error.message);
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Simpan';
+                }
             });
 
             window.editItem = (id) => {
                 const item = allItems.find(i => i.item_id === id);
                 if (!item) return;
-
+                
                 modalTitle.textContent = 'Edit Item';
                 document.getElementById('item_id').value = item.item_id;
                 document.getElementById('nama_item').value = item.nama_item;
                 document.getElementById('jumlah').value = item.jumlah;
-                document.getElementById('tanggal_pembelian').value = item.tanggal_pembelian;
+                document.getElementById('tanggal_pembelian').value = new Date(item.tanggal_pembelian).toISOString().split('T')[0];
                 document.getElementById('jadwal_cek').value = item.jadwal_cek;
                 
-                // Logika khusus untuk kondisi
                 const kondisiSelect = document.getElementById('kondisi');
                 kondisiSelect.value = item.kondisi;
                 
                 const tglBeli = new Date(item.tanggal_pembelian);
-                const jadwalCekDate = new Date(tglBeli.setMonth(tglBeli.getMonth() + parseInt(item.jadwal_cek)));
+                const jadwalCekDate = new Date(new Date(item.tanggal_pembelian).setMonth(tglBeli.getMonth() + parseInt(item.jadwal_cek)));
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 
-                if (today >= jadwalCekDate) {
+                if (today >= jadwalCekDate && !['Rusak', 'Habis'].includes(item.kondisi)) {
                     kondisiSelect.disabled = false;
                     alert("Item ini sudah melewati jadwal cek. Silakan perbarui kondisinya.");
                 } else {
                     kondisiSelect.disabled = true;
                 }
 
-                formModal.classList.remove('hidden');
-            }
+                openFormModal();
+            };
 
-            window.deleteItem = (id) => {
+            window.deleteItem = async (id) => {
                 if (confirm('Anda yakin ingin menghapus item ini?')) {
-                    alert(`Fungsi hapus untuk item ID: ${id} belum terhubung ke backend.`);
+                    try {
+                        const response = await fetch(WEB_APP_URL, {
+                            method: 'POST', redirect: 'follow',
+                            body: JSON.stringify({ action: 'deleteRow', sheetName: 'Inventory', id: id, idColumnName: 'item_id' }),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        });
+                        const result = await response.json();
+                        alert(result.message);
+                        if (result.status === 'success') fetchData();
+                    } catch (error) {
+                        alert('Gagal menghapus: ' + error.message);
+                    }
                 }
             }
+
+            const openFormModal = () => formModal.classList.remove('hidden');
+            const closeFormModal = () => {
+                formModal.classList.add('hidden');
+                itemForm.reset();
+            };
+
+            document.getElementById('add-item-btn').addEventListener('click', () => {
+                itemForm.reset();
+                document.getElementById('item_id').value = '';
+                modalTitle.textContent = 'Tambah Item Baru';
+                document.getElementById('kondisi').disabled = false;
+                document.getElementById('tanggal_pembelian').value = new Date().toISOString().split('T')[0];
+                openFormModal();
+            });
+            document.getElementById('cancel-form-btn').addEventListener('click', closeFormModal);
+            
+            const showLoading = () => tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
+            const showEmpty = () => {
+                table.classList.add('hidden');
+                blankState.classList.remove('hidden');
+            };
+            const showError = (message) => alert('Terjadi kesalahan: ' + message);
 
             fetchData();
         });

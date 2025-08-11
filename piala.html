@@ -28,7 +28,6 @@
             <!-- Data Table -->
             <div class="bg-white shadow-md rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
-                    <!-- PERUBAHAN: Menambahkan ID pada tabel -->
                     <table id="piala-table" class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -42,7 +41,6 @@
                         <tbody id="piala-table-body" class="bg-white divide-y divide-gray-200"></tbody>
                     </table>
                 </div>
-                <!-- PERUBAHAN: Memindahkan blank state ke luar container tabel -->
                  <div id="blank-state" class="text-center py-10 text-gray-500 hidden">
                     Belum ada data piala yang ditambahkan.
                 </div>
@@ -85,55 +83,53 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbywZvxjwx6ua_-GOsnAnwqwoRVAsQnvXOmWQrVlxl08J4tOlfuq04rDGbqIrwNIb0zB/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxr2ICo_C96PDnyqOl4-joM2l6Dy8c-wkfZcSIfgZ88_sto-Mx7PUo3_0ISTtD5Omw/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
-            // --- Logika Halaman Piala ---
-            
             let allPiala = [];
             let allSiswa = [];
 
-            async function fetchData() {
-                console.log("Fetching data for Piala page...");
-                // Nanti akan memanggil:
-                // const response = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getPialaPageData' }) });
-                // const data = await response.json();
-                // allPiala = data.piala;
-                // allSiswa = data.siswa;
-                
-                // Data contoh untuk pengembangan
-                allSiswa = [
-                    { siswa_id: 'siswa-001', nama_siswa: 'Budi Santoso' },
-                    { siswa_id: 'siswa-002', nama_siswa: 'Citra Lestari' }
-                ];
-                allPiala = [
-                    // Kosongkan untuk menguji blank state
-                    // { piala_id: 'p-001', tanggal_didapat: '2025-07-20', nama_kejuaraan: 'Olimpiade Sains Nasional', peringkat: 'Juara 1', pemegang_piala: 'Budi Santoso' },
-                    // { piala_id: 'p-002', tanggal_didapat: '2025-06-15', nama_kejuaraan: 'Lomba Cerdas Cermat', peringkat: 'Juara 3', pemegang_piala: 'Citra Lestari' },
-                ];
+            const table = document.getElementById('piala-table');
+            const tableBody = document.getElementById('piala-table-body');
+            const blankState = document.getElementById('blank-state');
+            const formModal = document.getElementById('form-modal');
+            const pialaForm = document.getElementById('piala-form');
+            const modalTitle = document.getElementById('modal-title');
 
-                renderTable(allPiala);
-                populateSiswaFilters();
+            async function fetchData() {
+                showLoading();
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST', redirect: 'follow',
+                        body: JSON.stringify({ action: 'getPialaPageData' }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const data = await response.json();
+                    if (data.status !== 'success') throw new Error(data.message);
+                    
+                    allPiala = data.piala;
+                    allSiswa = data.siswa;
+                    
+                    renderTable(allPiala);
+                    populateSiswaFilters();
+                } catch (error) {
+                    showError(error.message);
+                }
             }
 
             function renderTable(pialaList) {
-                // PERUBAHAN: Mengambil elemen tabel
-                const table = document.getElementById('piala-table');
-                const tableBody = document.getElementById('piala-table-body');
-                const blankState = document.getElementById('blank-state');
                 tableBody.innerHTML = '';
-
                 if (!pialaList || pialaList.length === 0) {
-                    // PERUBAHAN: Logika untuk menampilkan blank state
-                    blankState.classList.remove('hidden');
-                    table.classList.add('hidden');
+                    showEmpty();
                     return;
                 }
-                blankState.classList.add('hidden');
                 table.classList.remove('hidden');
+                blankState.classList.add('hidden');
 
-                pialaList.forEach(piala => {
+                const sortedData = pialaList.sort((a, b) => new Date(b.tanggal_didapat) - new Date(a.tanggal_didapat));
+
+                sortedData.forEach(piala => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td class="px-6 py-4 text-sm font-medium text-gray-900">${piala.nama_kejuaraan}</td>
@@ -141,8 +137,8 @@
                         <td class="px-6 py-4 text-sm text-gray-500">${new Date(piala.tanggal_didapat).toLocaleDateString('id-ID')}</td>
                         <td class="px-6 py-4 text-sm text-gray-500">${piala.pemegang_piala}</td>
                         <td class="px-6 py-4 text-right text-sm font-medium">
-                            <button class="text-indigo-600 hover:text-indigo-900" onclick="editPiala('${piala.piala_id}')">Edit</button>
-                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="deletePiala('${piala.piala_id}')">Hapus</button>
+                            <button class="text-indigo-600 hover:text-indigo-900" onclick="window.editPiala('${piala.piala_id}')">Edit</button>
+                            <button class="text-red-600 hover:text-red-900 ml-4" onclick="window.deletePiala('${piala.piala_id}')">Hapus</button>
                         </td>
                     `;
                     tableBody.appendChild(row);
@@ -159,35 +155,102 @@
                 });
             }
 
-            // --- Event Listeners & Form Handling ---
-            document.getElementById('add-piala-btn').addEventListener('click', () => {
-                document.getElementById('piala-form').reset();
-                document.getElementById('piala_id').value = '';
-                document.getElementById('modal-title').textContent = 'Tambah Data Piala';
-                document.getElementById('form-modal').classList.remove('hidden');
-            });
-
-            document.getElementById('cancel-form-btn').addEventListener('click', () => {
-                document.getElementById('form-modal').classList.add('hidden');
-            });
-
-            document.getElementById('piala-form').addEventListener('submit', (e) => {
+            pialaForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                // Logika untuk menyimpan data akan ditambahkan saat menghubungkan ke Code.gs
-                alert('Fungsi simpan belum terhubung ke backend.');
+                const saveBtn = document.getElementById('save-form-btn');
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Menyimpan...';
+
+                const id = document.getElementById('piala_id').value;
+                const isUpdate = !!id;
+
+                const formData = {
+                    action: isUpdate ? 'updateRow' : 'addPiala',
+                    sheetName: 'Piala',
+                    id: id,
+                    idColumnName: 'piala_id',
+                    data: {
+                        piala_id: id,
+                        nama_kejuaraan: document.getElementById('nama_kejuaraan').value,
+                        peringkat: document.getElementById('peringkat').value,
+                        tanggal_didapat: document.getElementById('tanggal_didapat').value,
+                        pemegang_piala: document.getElementById('pemegang_piala').value
+                    }
+                };
+                if (!isUpdate) delete formData.data.piala_id;
+
+                try {
+                    const response = await fetch(WEB_APP_URL, {
+                        method: 'POST', redirect: 'follow',
+                        body: JSON.stringify(formData),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const result = await response.json();
+                    alert(result.message);
+                    if (result.status === 'success') {
+                        closeFormModal();
+                        fetchData();
+                    }
+                } catch (error) {
+                    alert('Gagal menyimpan: ' + error.message);
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Simpan';
+                }
             });
 
             window.editPiala = (id) => {
-                alert(`Fungsi edit untuk piala ID: ${id} belum dibuat.`);
-            }
+                const piala = allPiala.find(p => p.piala_id === id);
+                if (!piala) return;
+                
+                modalTitle.textContent = 'Edit Data Piala';
+                document.getElementById('piala_id').value = piala.piala_id;
+                document.getElementById('nama_kejuaraan').value = piala.nama_kejuaraan;
+                document.getElementById('peringkat').value = piala.peringkat;
+                document.getElementById('tanggal_didapat').value = new Date(piala.tanggal_didapat).toISOString().split('T')[0];
+                document.getElementById('pemegang_piala').value = piala.pemegang_piala;
+                
+                openFormModal();
+            };
 
-            window.deletePiala = (id) => {
+            window.deletePiala = async (id) => {
                 if (confirm('Anda yakin ingin menghapus data piala ini?')) {
-                    alert(`Fungsi hapus untuk piala ID: ${id} belum terhubung ke backend.`);
+                    try {
+                        const response = await fetch(WEB_APP_URL, {
+                            method: 'POST', redirect: 'follow',
+                            body: JSON.stringify({ action: 'deleteRow', sheetName: 'Piala', id: id, idColumnName: 'piala_id' }),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        });
+                        const result = await response.json();
+                        alert(result.message);
+                        if (result.status === 'success') fetchData();
+                    } catch (error) {
+                        alert('Gagal menghapus: ' + error.message);
+                    }
                 }
             }
 
-            // Panggil fungsi awal
+            const openFormModal = () => formModal.classList.remove('hidden');
+            const closeFormModal = () => {
+                formModal.classList.add('hidden');
+                pialaForm.reset();
+            };
+
+            document.getElementById('add-piala-btn').addEventListener('click', () => {
+                pialaForm.reset();
+                document.getElementById('piala_id').value = '';
+                modalTitle.textContent = 'Tambah Data Piala';
+                openFormModal();
+            });
+            document.getElementById('cancel-form-btn').addEventListener('click', closeFormModal);
+            
+            const showLoading = () => tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-10 text-gray-500">Memuat data...</td></tr>`;
+            const showEmpty = () => {
+                table.classList.add('hidden');
+                blankState.classList.remove('hidden');
+            };
+            const showError = (message) => alert('Terjadi kesalahan: ' + message);
+
             fetchData();
         });
     </script>
