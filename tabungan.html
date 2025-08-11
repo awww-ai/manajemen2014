@@ -149,7 +149,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxy0kxQEghe7NnkN3VhDdZuRZbywmSfriaefgXyOYAJpC9quhauh9gPkGsdA662ZZdM/exec';
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzs4gedUQ79vPlB9huJfI8V577uBZte1eXoHjYHvE5QfJm3JBA1xQInQtm37sUTg_tq/exec';
             const userData = JSON.parse(localStorage.getItem('userData'));
             if (!userData) { window.location.href = 'login.html'; return; }
 
@@ -348,8 +348,9 @@
                 const id = document.getElementById('transaksi_tabungan_id').value;
                 const isUpdate = !!id;
 
+                // --- PERBAIKAN DI SINI ---
                 const formData = {
-                    action: isUpdate ? 'updateRow' : 'addTransaksi',
+                    action: isUpdate ? 'updateRow' : 'addTransaksiTabungan',
                     sheetName: 'Tabungan',
                     id: id,
                     idColumnName: 'transaksi_tabungan_id',
@@ -362,8 +363,6 @@
                 };
                 if(isUpdate) {
                     formData.data.transaksi_tabungan_id = id;
-                } else {
-                    delete formData.data.transaksi_tabungan_id;
                 }
 
                 try {
